@@ -1,0 +1,12 @@
+
+> kivi-semantic-memory@1.0.0 dev
+> next dev -p 3000
+
+▲ Next.js 16.3.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://172.17.144.1:3000
+- Environments: .env
+✓ Ready in 849ms
+✓ Running next.config.mjs took 18ms
+
+✓ Generated AGENTS.md and CLAUDE.md for AI agents. Set `agentRules: false` in next.config to disable.
