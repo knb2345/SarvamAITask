@@ -6,3 +6,6 @@ db/*.db-wal
 db/*.db-shm
 *.tsbuildinfo
 next-env.d.ts
+ingest.log
+eval.log
+dev.log

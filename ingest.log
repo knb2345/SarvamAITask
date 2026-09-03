@@ -1,195 +1,0 @@
-ingesting 499 records from corpus/dictations.jsonl as user u_demo
-timestamps will be shifted so the newest dictation lands yesterday (pass --keep-dates to import them unchanged)
-  embedding dictations: 0/499     [embeddings] API unavailable (http 429: {
-  "error": {
-    "code": 429,
-    "message": "You exceeded your current quota, please check your plan and bi)
-  [embeddings] falling back to the local embedder for the rest of this run
-  embedding dictations: 499/499     reading dictations: 5/499     reading dictations: 25/499     reading dictations: 50/499     reading dictations: 75/499     reading dictations: 100/499     reading dictations: 125/499     reading dictations: 150/499     reading dictations: 175/499     reading dictations: 200/499     reading dictations: 225/499     reading dictations: 250/499     reading dictations: 275/499     reading dictations: 300/499     reading dictations: 325/499     reading dictations: 350/499     [gemini] generate quota exhausted on key 1; switching to key 2
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  reading dictations: 375/499     [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  reading dictations: 400/499     [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  reading dictations: 425/499     [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  reading dictations: 450/499     [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  reading dictations: 475/499     [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  reading dictations: 499/499     embedding memories: 0/589     updating memory: 1/499     [gemini] generate quota exhausted on all 2 key(s)
-  updating memory: 25/499     [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  updating memory: 50/499     [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  updating memory: 75/499     [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  updating memory: 100/499     [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  updating memory: 125/499     [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  updating memory: 150/499     [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  updating memory: 175/499     [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  updating memory: 200/499     [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  updating memory: 225/499     [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  updating memory: 250/499     [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  updating memory: 275/499     [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  updating memory: 300/499     [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  updating memory: 325/499     [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  updating memory: 350/499     [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  updating memory: 375/499     [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  updating memory: 400/499     [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  [gemini] generate quota exhausted on all 2 key(s)
-  updating memory: 425/499     updating memory: 450/499     updating memory: 475/499     updating memory: 499/499   
-{
-  "runId": "run_mtlyqecgv18028",
-  "dictations": 499,
-  "skipped": 104,
-  "created": 187,
-  "reinforced": 14,
-  "superseded": 0,
-  "rejected": 374,
-  "episodes": 388,
-  "personal": 7,
-  "resumedSkipped": 0,
-  "errors": 0,
-  "extractionMs": 295236,
-  "reconcileMs": 24289,
-  "totalMs": 353503,
-  "dbBytesBefore": 208896,
-  "dbBytesAfter": 6938624,
-  "costUsd": 0.04884295,
-  "inputTokens": 129684,
-  "outputTokens": 89343
-}
-
-db grew from 204KB to 6776KB
