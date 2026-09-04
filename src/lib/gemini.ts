@@ -1,6 +1,9 @@
 import { config, priceOf } from './config';
 import { localEmbedBatch } from './localembed';
-import { db } from './db';
+import { groqGenerate } from './groq';
+import { logModelCall, type GenContent, type GenPart, type GenerateOpts, type Usage } from './llm-types';
+
+export type { GenContent, GenPart, GenerateOpts, Usage } from './llm-types';
 
 const BASE = 'https://generativelanguage.googleapis.com/v1beta';
 
@@ -97,16 +100,7 @@ export function keyStatus() {
   };
 }
 
-export type Usage = { inputTokens: number; outputTokens: number; latencyMs: number; costUsd: number; model: string };
-
-function logCall(purpose: string, u: Usage, ok: boolean, runId?: string) {
-  try {
-    db().prepare(
-      `INSERT INTO model_calls (run_id, purpose, model, input_tokens, output_tokens, latency_ms, cost_usd, ok)
-       VALUES (?,?,?,?,?,?,?,?)`
-    ).run(runId ?? null, purpose, u.model, u.inputTokens, u.outputTokens, u.latencyMs, u.costUsd, ok ? 1 : 0);
-  } catch { /* ledger is best-effort; never break the request */ }
-}
+const logCall = logModelCall;
 
 /**
  * Every request to the model goes through here. Transient failures — rate limits,
@@ -173,29 +167,18 @@ async function post(
 /** Embeddings retry far less: a fallback exists, so waiting is the wrong trade. */
 const postEmbed = (url: string, body: unknown) => post(url, body, 2, 'embed', 30_000);
 
-export type GenPart = {
-  text?: string;
-  functionCall?: { name: string; args: any; id?: string };
-  functionResponse?: { name: string; response: any; id?: string };
-  thoughtSignature?: string;
-};
-export type GenContent = { role: 'user' | 'model'; parts: GenPart[] };
 
-export type GenerateOpts = {
-  system?: string;
-  contents: GenContent[];
-  tools?: any[];
-  jsonSchema?: any;
-  temperature?: number;
-  model?: string;
-  purpose: string;
-  runId?: string;
-  /** Require the model to answer through a tool rather than free text. */
-  forceToolCall?: boolean;
-  thinkingLevel?: string;
-};
+
+/** Which backend serves generation. Embeddings always go to Gemini or the local embedder. */
+export function generationProvider(setting: string = config.llmProvider): 'gemini' | 'groq' {
+  if (setting === 'groq') return 'groq';
+  if (setting === 'gemini') return 'gemini';
+  return config.groqKeys.length ? 'groq' : 'gemini';
+}
 
 export async function generate(opts: GenerateOpts): Promise<{ parts: GenPart[]; text: string; usage: Usage }> {
+  const provider = opts.provider ?? generationProvider();
+  if (provider === 'groq') return groqGenerate(opts);
   if (config.geminiKeys.length === 0) throw new Error('GEMINI_API_KEY is not set. Copy .env.example to .env and add your key.');
   const model = opts.model || config.chatModel;
   const body: any = {
@@ -235,7 +218,12 @@ export async function generate(opts: GenerateOpts): Promise<{ parts: GenPart[]; 
 }
 
 export async function generateJson<T>(opts: GenerateOpts): Promise<{ value: T; usage: Usage }> {
-  const { text, usage } = await generate({ ...opts, model: opts.model || config.extractModel });
+  // Never carry one provider's model name to another: each backend picks its own
+  // default. Passing "gemini-3.5-flash-lite" to Groq failed every extraction call.
+  // Extraction and answering are routed independently; see config.extractProvider.
+  const provider = opts.provider ?? generationProvider(config.extractProvider);
+  const model = opts.model ?? (provider === 'gemini' ? config.extractModel : undefined);
+  const { text, usage } = await generate({ ...opts, model, provider });
   try {
     return { value: JSON.parse(text) as T, usage };
   } catch {

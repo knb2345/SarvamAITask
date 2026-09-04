@@ -15,6 +15,29 @@ if (fs.existsSync(envPath)) {
 export const config = {
   dbPath: process.env.KIVI_DB_PATH || path.join(process.cwd(), 'db', 'kivi.db'),
   geminiKey: process.env.GEMINI_API_KEY || '',
+  groqKey: (process.env.GROQ_API_KEY || '').trim(),
+  groqKeys: [
+    process.env.GROQ_API_KEY || '',
+    ...(process.env.GROQ_API_KEYS || '').split(',').map((k) => k.trim()),
+  ]
+    .map((k) => k.trim())
+    .filter(Boolean),
+  groqModel: (process.env.KIVI_GROQ_MODEL || 'openai/gpt-oss-120b').trim(),
+  /**
+   * Which backend answers and extracts. "auto" prefers Groq when a key is present —
+   * it is faster and its limits are far higher — and falls back to Gemini otherwise.
+   * Embeddings are unaffected: Groq has no embedding endpoint.
+   */
+  llmProvider: (process.env.KIVI_LLM_PROVIDER || 'auto').trim() as 'auto' | 'gemini' | 'groq',
+  /**
+   * The two workloads have opposite shapes, and the free tiers are limited on opposite
+   * axes. Extraction is a hundred large batched calls — cheap on Groq's requests-per-day
+   * but far over its 8k tokens-per-minute ceiling. Hey Kivi is many small calls where
+   * latency is what the person feels. So each goes where its limit is not the binding
+   * one, and either can be pinned explicitly.
+   */
+  extractProvider: (process.env.KIVI_EXTRACT_PROVIDER || 'gemini').trim() as 'auto' | 'gemini' | 'groq',
+  chatProvider: (process.env.KIVI_CHAT_PROVIDER || 'auto').trim() as 'auto' | 'gemini' | 'groq',
   /**
    * Optional extra keys, comma separated. When one key's daily quota is exhausted the
    * client moves to the next rather than retrying a wall it cannot get past. One key is
@@ -51,6 +74,9 @@ export const PRICING: Record<string, { in: number; out: number }> = {
   'gemini-flash-latest': { in: 0.30, out: 2.50 },
   'gemini-embedding-001': { in: 0.15, out: 0 },
   'gemini-embedding-2': { in: 0.15, out: 0 },
+  'openai/gpt-oss-120b': { in: 0.15, out: 0.75 },
+  'openai/gpt-oss-20b': { in: 0.075, out: 0.30 },
+  'qwen/qwen3.8-27b': { in: 0.15, out: 0.60 },
 };
 
 export function priceOf(model: string, inTok: number, outTok: number): number {

@@ -184,6 +184,13 @@ for (const c of cases) {
   results.push(record);
   console.log(`${record.passed ? 'pass' : 'FAIL'} (${((Date.now() - started) / 1000).toFixed(1)}s)${record.passed ? '' : ' — ' + failures.join('; ')}`);
 
+  // Free tiers meter tokens per minute, and a run of thirty cases will exhaust that
+  // budget in seconds and then spend minutes retrying. Pausing between cases finishes
+  // the same work sooner and keeps the recorded latencies honest — they measure the
+  // system answering, not the client waiting out a rate limit.
+  const pace = Number(process.env.KIVI_EVAL_PACE_MS || 0);
+  if (pace > 0) await new Promise((r) => setTimeout(r, pace));
+
   // Written after every case: an evaluation that loses its evidence when the last case
   // fails is not an evaluation. The final write below replaces this with the full report.
   fs.mkdirSync(outDir, { recursive: true });

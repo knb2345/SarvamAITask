@@ -1,6 +1,6 @@
 import { config } from './config';
 import { db, newId } from './db';
-import { generate, type GenContent } from './gemini';
+import { generate, generationProvider, type GenContent } from './gemini';
 import { confirmMemory, createMemory, forgetMemory, getMemory } from './memory';
 import { RETRIEVAL_FLOOR, searchDictations, searchMemories } from './retrieve';
 
@@ -11,6 +11,13 @@ import { RETRIEVAL_FLOOR, searchDictations, searchMemories } from './retrieve';
  * every answer to declare its outcome and carry the ids it relied on. Anything it says
  * that is not supported by a retrieved row is a bug we can see.
  */
+
+/** Words too common to prove that a citation is about the same thing as the answer. */
+const COMMON = new Set([
+  'user', 'this', 'that', 'with', 'from', 'have', 'they', 'their', 'about', 'would',
+  'should', 'there', 'which', 'when', 'what', 'said', 'says', 'dictated', 'message',
+  'slack', 'email', 'note', 'team', 'work', 'into', 'been', 'were', 'will', 'them',
+]);
 
 export const HEY_KIVI_SYSTEM = `You are Hey Kivi — the voice interface to a person's own dictation history.
 
@@ -50,8 +57,14 @@ RESPOND
 Rules that override everything above:
 - Every factual claim in your answer must come from a tool result you cite.
 - If memories disagree, say so and prefer the most recent, naming the dates.
+- When they ask whether something changed, or what it used to be, call recall() with
+  include_history: true. A superseded memory is what Kivi believed before, and saying so
+  is the point of keeping it.
 - If a memory is low confidence or supported by only one offhand remark, say how you know it.
 - Never invent dictation or memory ids. Never quote words that were not returned to you.
+- Cite the memory that actually carries the answer, not whatever else the search returned.
+  A citation is the person's way of checking you; pointing them at something unrelated is
+  worse than citing nothing.
 
 PERSONAL MATERIAL
 Some of what the person dictates is not working material — health, money, family, politics,
@@ -78,6 +91,11 @@ export const TOOL_DECLARATIONS = [
             },
             since: { type: 'string', description: 'ISO date lower bound, optional.' },
             until: { type: 'string', description: 'ISO date upper bound, optional.' },
+            include_history: {
+              type: 'boolean',
+              description:
+                'Also search what Kivi used to believe: memories replaced by something the person said later. Use this whenever they ask whether something changed, or what it was before.',
+            },
             limit: { type: 'number' },
           },
           required: ['query'],
@@ -227,6 +245,7 @@ export async function askHeyKivi(userId: string, question: string, history: { ro
       temperature: 0.1,
       purpose: 'answer',
       forceToolCall: true,
+      provider: generationProvider(config.chatProvider),
     });
     modelMs += res.usage.latencyMs;
     inputTokens += res.usage.inputTokens;
@@ -283,7 +302,7 @@ export async function askHeyKivi(userId: string, question: string, history: { ro
     final = { answer: 'I looked but could not settle this one. Try narrowing it down?', outcome: 'abstained', memory_ids: [], dictation_ids: [] };
   }
 
-  // Citations must resolve to real rows. Anything that does not is dropped and reported.
+  // Citations must resolve to real rows AND actually bear on what was said.
   const memIds: string[] = final.memory_ids ?? [];
   const dictIds: string[] = final.dictation_ids ?? [];
   const memories = memIds.map((id) => getMemory(id)).filter(Boolean);
@@ -295,7 +314,45 @@ export async function askHeyKivi(userId: string, question: string, history: { ro
     ...dictIds.filter((id) => !dictations.find((d: any) => d.id === id)),
   ];
   if (invalid.length) notes.push(`dropped ${invalid.length} citation(s) that do not exist: ${invalid.join(', ')}`);
-  if (final.outcome === 'answered' && memories.length === 0 && dictations.length === 0) {
+
+  /*
+   * A citation that exists but has nothing to do with the answer is worse than no
+   * citation at all: it makes an unsupported claim look sourced, and the person clicks
+   * it expecting to see where the answer came from. Observed in practice — a correct
+   * answer about the December launch date arrived cited to a memory about freezing
+   * scope for HDFC. So each citation has to share real content with what was said, or
+   * it is dropped and the discrepancy recorded.
+   */
+  const unrelated: string[] = [];
+  const supported = (text: string) => {
+    const words = (t: string) =>
+      new Set(
+        (t.toLowerCase().match(/[a-z0-9]+/g) ?? []).filter((w) => w.length > 3 && !COMMON.has(w))
+      );
+    const a = words(final.answer + ' ' + (final.draft ?? ''));
+    const b = words(text);
+    if (b.size === 0) return true;
+    let shared = 0;
+    for (const w of b) if (a.has(w)) shared++;
+    return shared >= 2 || shared / b.size >= 0.34;
+  };
+
+  const keptMemories = (memories as any[]).filter((m) => {
+    if (supported(m.statement)) return true;
+    unrelated.push(m.id);
+    return false;
+  });
+  const keptDictations = (dictations as any[]).filter((d) => {
+    if (supported(d.formatted)) return true;
+    unrelated.push(d.id);
+    return false;
+  });
+  if (unrelated.length) {
+    notes.push(
+      `dropped ${unrelated.length} citation(s) that do not support the answer: ${unrelated.join(', ')}`
+    );
+  }
+  if (final.outcome === 'answered' && keptMemories.length === 0 && keptDictations.length === 0) {
     // Saying "from your history" about an answer with no source is the very thing this
     // product exists not to do. If nothing was retrieved, it was conversation.
     const searched = steps.some((s) => s.tool === 'recall' || s.tool === 'find_dictations');
@@ -312,7 +369,7 @@ export async function askHeyKivi(userId: string, question: string, history: { ro
     outcome: final.outcome,
     confidence: final.confidence ?? 'medium',
     draft: final.draft,
-    citations: { memories: memories as any[], dictations: dictations as any[] },
+    citations: { memories: keptMemories, dictations: keptDictations },
     trace: {
       steps, rounds, notes, retrievalMs, modelMs,
       totalMs: Date.now() - t0,
@@ -325,9 +382,15 @@ export async function askHeyKivi(userId: string, question: string, history: { ro
 async function runTool(name: string, args: any, userId: string): Promise<{ result: any; step: Omit<TraceStep, 'tool' | 'args' | 'ms'> }> {
   switch (name) {
     case 'recall': {
+      // Context is not free: every memory handed to the model costs tokens, latency and
+      // a little of its attention. Six well-ranked memories with one quote each answer
+      // the question; twenty with three quotes each mostly bury it.
       const found = await searchMemories({
         userId, query: args.query, kinds: args.kinds, since: args.since ?? null,
-        until: args.until ?? null, limit: Math.min(args.limit ?? 10, 20),
+        until: args.until ?? null, limit: Math.min(args.limit ?? 6, 10),
+        // Superseded memories are history, not deletions — but they stay out of the way
+        // unless the person is actually asking what changed.
+        includeInactive: args.include_history === true,
       });
       const kept = found.filter((m) => m.score >= RETRIEVAL_FLOOR);
       return {
@@ -336,7 +399,11 @@ async function runTool(name: string, args: any, userId: string): Promise<{ resul
             id: m.id, kind: m.kind, statement: m.statement, subject: m.subject,
             confidence: Number(m.confidence.toFixed(2)), supported_by_dictations: m.support_count,
             first_seen: m.first_seen_at.slice(0, 10), last_seen: m.last_seen_at.slice(0, 10),
-            evidence: m.evidence.map((e) => ({ dictation_id: e.dictation_id, on: e.spoken_at.slice(0, 16), app: e.app, quote: e.quote.slice(0, 220) })),
+            status: m.status === 'active' ? undefined : m.status,
+            evidence: m.evidence.slice(0, 1).map((e) => ({
+              dictation_id: e.dictation_id, on: e.spoken_at.slice(0, 16), app: e.app,
+              quote: e.quote.slice(0, 160),
+            })),
           })),
           note: kept.length === 0 ? 'nothing stored matched this query above the relevance floor' : undefined,
         },
@@ -353,7 +420,7 @@ async function runTool(name: string, args: any, userId: string): Promise<{ resul
     case 'find_dictations': {
       const found = await searchDictations({
         userId, query: args.query, app: args.app ?? null, since: args.since ?? null,
-        until: args.until ?? null, limit: Math.min(args.limit ?? 8, 20),
+        until: args.until ?? null, limit: Math.min(args.limit ?? 6, 12),
       });
       const withheld = (
         db()
@@ -366,7 +433,7 @@ async function runTool(name: string, args: any, userId: string): Promise<{ resul
         result: {
           dictations: found.map((d) => ({
             id: d.id, spoken_at: d.spoken_at, app: d.app, context: d.context_label,
-            style: d.style, preview: d.formatted.slice(0, 400),
+            style: d.style, preview: d.formatted.slice(0, 220),
           })),
           note: found.length === 0 ? 'no dictations matched' : undefined,
           excluded_personal_dictations: withheld,
@@ -429,6 +496,7 @@ Never introduce a fact that is not in the sources.`,
         ],
         temperature: 0.3,
         purpose: 'draft',
+        provider: generationProvider(config.chatProvider),
       });
       return {
         result: {

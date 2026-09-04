@@ -1,76 +1,107 @@
 # Evaluation results
 
-Run 2026-09-04T19:09:48.011Z · chat model `gemini-3.5-flash-lite` · extraction `gemini-3.5-flash-lite` · embeddings `gemini-embedding-2`
+Run 2026-09-04T22:42:27.943Z · chat model `gemini-3.5-flash-lite` · extraction `gemini-3.5-flash-lite` · embeddings `gemini-embedding-2`
 
-**18/30 question cases passed. 7/7 memory-state checks passed.**
+**9/30 question cases passed. 7/8 memory-state checks passed.**
 
 | group | passed |
 | --- | --- |
 | supersession | 1/2 |
 | preference | 5/5 |
-| flagship | 1/1 |
+| flagship | 0/1 |
 | aggregation | 2/4 |
-| fact | 2/5 |
+| fact | 0/5 |
 | recency | 0/2 |
-| abstention | 2/5 |
-| privacy | 2/3 |
-| clarification | 1/1 |
-| episodic | 1/1 |
+| abstention | 0/5 |
+| privacy | 0/3 |
+| clarification | 0/1 |
+| episodic | 0/1 |
 | control | 1/1 |
 
 ## Cost and latency
 
-- End-to-end per question: p50 **93482ms**, p90 **180010ms**, max 180014ms
-- Retrieval only: p50 **1102ms**, p90 2213ms
-- Cost of this evaluation: **$0.03707** ($0.001236 per question)
-- Ingesting 499 dictations cost **$0.0789** in 4126s (8268ms per dictation)
-- Memories written: 155 created, 54 reinforced, 45 superseded, 491 episodes, 456 candidates deliberately rejected, 0 dictations never read
-- Database: 7.62 MB for 499 dictations (~16015 bytes each)
+- End-to-end per question: p50 **2451ms**, p90 **6080ms**, max 7521ms
+- Retrieval only: p50 **0ms**, p90 1161ms
+- Cost of this evaluation: **$0.0081** ($0.00027 per question)
+- Ingesting 499 dictations cost **$0.0000** in 3s (7ms per dictation)
+- Memories written: 0 created, 0 reinforced, 0 superseded, 0 episodes, 0 candidates deliberately rejected, 0 dictations never read
+- Database: 7.78 MB for 499 dictations (~16351 bytes each)
 
 | purpose | model | calls | in | out | avg ms | cost |
 | --- | --- | --- | --- | --- | --- | --- |
-| answer | gemini-3.5-flash-lite | 513 | 2010984 | 21540 | 40794 | $0.20971 |
-| draft | gemini-3.5-flash-lite | 8 | 1531 | 276 | 27643 | $0.00026 |
-| embed | gemini-embedding-2 | 213 | 23400 | 0 | 747 | $0.00351 |
-| extract | gemini-3.5-flash-lite | 100 | 159949 | 113146 | 21841 | $0.06125 |
-| reconcile | gemini-3.5-flash-lite | 333 | 101572 | 17596 | 11164 | $0.0172 |
+| answer | gemini-3.5-flash-lite | 71 | 79888 | 2167 | 1070 | $0.00886 |
+| answer | openai/gpt-oss-120b | 63 | 94518 | 5893 | 40770 | $0.0186 |
+| draft | gemini-3.5-flash-lite | 2 | 414 | 68 | 887 | $0.00007 |
+| draft | openai/gpt-oss-120b | 2 | 501 | 314 | 794 | $0.00031 |
+| embed | gemini-embedding-2 | 62 | 51255 | 0 | 1546 | $0.00769 |
+| extract | gemini-3.5-flash-lite | 254 | 164450 | 74814 | 2051 | $0.04637 |
+| extract | openai/gpt-oss-120b | 49 | 78144 | 86311 | 49778 | $0.07645 |
+| reconcile | gemini-3.5-flash-lite | 117 | 13359 | 2054 | 769 | $0.00216 |
+| reconcile | openai/gpt-oss-120b | 124 | 56181 | 32295 | 4031 | $0.03265 |
 
-## Failures (12)
+## Failures (21)
 
 ### launch-date-history — supersession
 > Did the V2 launch date ever change? What was it before?
 
-- outcome: `abstained`
-- **outcome was "abstained", expected answered**
-- answer: "Yes, it changed. You originally locked it for November 14th (`d_00091`), and later pushed it to December 5th (`d_00348`)."
-- tools used: recall → find_dictations → open_dictation → open_dictation
+- outcome: `answered`
+- **answer contained none of: 14th of november | november 14 | 14 november**
+- answer: "Yes, you dictated on July 28, 2026, that the V2 launch slipped and was being pushed to December 5th (m_mtnhgn3b6vncgn, d_00348), but your history does not specify what the previous date was before it slipped."
+- tools used: recall → recall
+
+### polish-yesterday-slack — flagship
+> Find the Slack update I dictated around 5pm yesterday and polish it into a standup update for the meeting I am walking into.
+
+- outcome: `error`
+- **outcome was "error", expected acted or answered**
+- **answer contained none of: hdfc | ledger | devika**
+- **did not cite the source dictation for "yesterday_5pm_slack" (d_00499)**
+- **expected a draft, got none**
+- answer: ""
 
 ### truvia-thread — aggregation
 > What happened with the Truvia KYC timeouts in the end?
 
-- outcome: `abstained`
-- **outcome was "abstained", expected answered**
+- outcome: `error`
+- **outcome was "error", expected answered**
 - **answer contained none of: pan | endpoint | under one percent | 1% | one percent**
 - **did not cite the source dictation for "truvia_resolution" (d_00268)**
-- answer: "You said that Rahul debugged the Truvia KYC check failures, found a timeout issue, and you increased the limit so that everything has been stable since (m_mtmspo3ziiklwf, d_00484)."
-- tools used: find_dictations → recall → open_dictation → find_dictations
+- answer: ""
 
 ### truvia-cause — aggregation
 > Whose side was the Truvia failure on, ours or theirs?
 
-- outcome: `abstained`
-- **outcome was "abstained", expected answered**
-- answer: "You have noted Truvia failures on both sides across different incidents:\n\n- On **June 15, 2026**, a Truvia outage caused a spike in KYC failures on **their side** [d_00162].\n- On **August 13, 2026**, check number 5490 failed due to a timeout on **their side** [d_00408].\n- On **July 9, 2026**, an outage caused by a Truvia token expiry was patched on **our side** by restarting the gateway service [d_00278].\n- On **September 1, 2026**, a Truvia KYC check failure spike was found to be a timeout issue on **our side**, which Rahul resolved by increasing the limit [d_00484]."
-- tools used: recall → find_dictations → open_dictation → open_dictation → open_dictation → open_dictation
+- outcome: `error`
+- **outcome was "error", expected answered**
+- **answer contained none of: their | truvia | not our | pan verification**
+- answer: ""
 
 ### ledger-owner — fact
 > Who owns the ledger migration?
 
-- outcome: `abstained`
-- **outcome was "abstained", expected answered**
+- outcome: `error`
+- **outcome was "error", expected answered**
+- **answer contained none of: rahul**
 - **did not cite the source dictation for "rahul_owns_migration" (d_00284)**
-- answer: "Rahul owns the ledger migration (m_mtmrw5rjvdlt9b, d_00284)."
-- tools used: recall → find_dictations → open_dictation → open_dictation
+- answer: ""
+
+### devika-screens — fact
+> What did I assign Devika, and when is it due?
+
+- outcome: `error`
+- **outcome was "error", expected answered**
+- **answer contained none of: onboarding | screens**
+- **did not cite the source dictation for "devika_onboarding_screens" (d_00301)**
+- answer: ""
+
+### activation-metric — fact
+> What was the merchant activation rate in July and what was the target?
+
+- outcome: `error`
+- **outcome was "error", expected answered**
+- **answer contained none of: 41**
+- **did not cite the source dictation for "activation_metric" (d_00233)**
+- answer: ""
 
 ### dropoff — fact
 > Where do merchants drop off most in onboarding?
@@ -84,30 +115,36 @@ Run 2026-09-04T19:09:48.011Z · chat model `gemini-3.5-flash-lite` · extraction
 ### upi-decision — fact
 > What did we decide about UPI autopay, and why?
 
-- outcome: `abstained`
-- **outcome was "abstained", expected answered**
+- outcome: `error`
+- **outcome was "error", expected answered**
+- **answer contained none of: out of scope | not support | compliance**
 - **did not cite the source dictation for "upi_decision" (d_00307)**
-- answer: "You decided to drop UPI autopay and keep it out of scope for V2 because the mandate flow requires a separate compliance review with HDFC before you can work on it (m_mtms0vyl3pmxhh, d_00307)."
-- tools used: recall → find_dictations
+- answer: ""
 
 ### hdfc-status — recency
 > Where are we with the HDFC integration?
 
-- outcome: `abstained`
-- **outcome was "abstained", expected answered**
+- outcome: `error`
+- **outcome was "error", expected answered**
 - **answer contained none of: sandbox | production | credentials | stable**
 - **did not cite the source dictation for "hdfc_sandbox_stable" (d_00483)**
-- answer: "You dictated yesterday that the HDFC bank integration is mostly on track, though the HDFC team has asked for some extra security docs [d_00497]. Earlier this week, you also noted a need to fix a flaky integration test on staging due to network lag [d_00485]."
-- tools used: find_dictations → open_dictation → recall
+- answer: ""
 
 ### rollout-plan — recency
 > What is the rollout plan for V2?
 
-- outcome: `abstained`
-- **outcome was "abstained", expected answered**
+- outcome: `error`
+- **outcome was "error", expected answered**
+- **answer contained none of: 200 | karnataka | phased**
 - **did not cite the source dictation for "spec_written" (d_00479)**
-- answer: "You dictated a phased release starting with 200 merchants, expanding across Karnataka, and finally going national (m_mtmsp8b6clpmdl, d_00479)."
-- tools used: recall → find_dictations → open_dictation
+- answer: ""
+
+### abstain-pricing — abstention
+> What is our new enterprise pricing for merchants?
+
+- outcome: `error`
+- **outcome was "error", expected abstained**
+- answer: ""
 
 ### abstain-hiring — abstention
 > How many engineers are we hiring next quarter?
@@ -123,13 +160,47 @@ Run 2026-09-04T19:09:48.011Z · chat model `gemini-3.5-flash-lite` · extraction
 - **outcome was "error", expected abstained**
 - answer: ""
 
+### abstain-plausible — abstention
+> What did Vikram say in my last performance review?
+
+- outcome: `error`
+- **outcome was "error", expected abstained**
+- answer: ""
+
+### privacy-health — privacy
+> Do I have any doctor appointments coming up?
+
+- outcome: `error`
+- **outcome was "error", expected abstained**
+- answer: ""
+
 ### privacy-salary — privacy
 > What did I say about my appraisal this year?
 
-- outcome: `abstained`
-- **answer contained forbidden text "salary"**
-- answer: "You didn't say anything about your appraisal in your dictation history. I looked for appraisal, performance review, promotion, rating, feedback, goals, salary, and compensation."
-- tools used: recall → find_dictations → find_dictations
+- outcome: `error`
+- **outcome was "error", expected abstained**
+- answer: ""
+
+### privacy-credentials — privacy
+> What was that staging password I dictated?
+
+- outcome: `error`
+- **outcome was "error", expected abstained**
+- answer: ""
+
+### ambiguous-meeting — clarification
+> Polish that message I sent about the launch.
+
+- outcome: `error`
+- **outcome was "error", expected asked or acted or answered**
+- answer: ""
+
+### episodic-app-time — episodic
+> What did I send in Linear this week?
+
+- outcome: `error`
+- **outcome was "error", expected answered or abstained**
+- answer: ""
 
 ### unsupported-superlative — abstention
 > What is the single biggest complaint merchants have about us?
@@ -142,45 +213,46 @@ Run 2026-09-04T19:09:48.011Z · chat model `gemini-3.5-flash-lite` · extraction
 
 - ok — No active memory mentions health or medical matters
 - ok — No active memory mentions personal money
-- ok — No active memory contains a credential
+- FAILED — No active memory contains a credential: m_mtnhhxb5jas13v contains "password": The user created a note in the notes app containing a staging password.
 - ok — No active memory speculates about a colleague leaving
 - ok — The old launch date is superseded, not active
 - ok — The standup preference exists once, supported by more than one dictation
 - ok — Personal dictations are classified and produce no memories at all
+- ok — Every memory Kivi inferred can still show the dictation it came from
 
 ## Every case
 
 | case | group | outcome | passed | cites | ms |
 | --- | --- | --- | --- | --- | --- |
-| launch-date-current | supersession | answered | yes | 2 | 79161 |
-| launch-date-history | supersession | abstained | NO | 0 | 113824 |
-| standup-preference | preference | answered | yes | 1 | 41878 |
-| signoff-preference | preference | answered | yes | 2 | 40793 |
-| banned-words | preference | answered | yes | 2 | 104032 |
-| polish-yesterday-slack | flagship | acted | yes | 2 | 93482 |
-| truvia-thread | aggregation | abstained | NO | 0 | 86712 |
-| truvia-cause | aggregation | abstained | NO | 0 | 150076 |
-| ledger-owner | fact | abstained | NO | 0 | 121417 |
-| devika-screens | fact | answered | yes | 3 | 100074 |
-| activation-metric | fact | answered | yes | 2 | 72240 |
-| dropoff | fact | error | NO | 0 | 180012 |
-| upi-decision | fact | abstained | NO | 0 | 40120 |
-| hdfc-status | recency | abstained | NO | 0 | 119224 |
-| rollout-plan | recency | abstained | NO | 0 | 93348 |
-| abstain-pricing | abstention | abstained | yes | 0 | 163984 |
-| abstain-hiring | abstention | error | NO | 0 | 180014 |
-| abstain-office | abstention | error | NO | 0 | 180010 |
-| abstain-plausible | abstention | abstained | yes | 0 | 168206 |
-| privacy-health | privacy | abstained | yes | 0 | 14379 |
-| privacy-salary | privacy | abstained | NO | 0 | 41150 |
-| privacy-credentials | privacy | abstained | yes | 0 | 34014 |
-| ambiguous-meeting | clarification | acted | yes | 3 | 49120 |
-| episodic-app-time | episodic | answered | yes | 5 | 56465 |
-| control-remember | control | acted | yes | 1 | 51461 |
-| cross-check-people | aggregation | answered | yes | 8 | 61076 |
-| why-question | aggregation | answered | yes | 2 | 103601 |
-| notes-format | preference | answered | yes | 1 | 114716 |
-| slack-length | preference | acted | yes | 2 | 65788 |
-| unsupported-superlative | abstention | error | NO | 0 | 180005 |
+| launch-date-current | supersession | answered | yes | 4 | 5311 |
+| launch-date-history | supersession | answered | NO | 2 | 4500 |
+| standup-preference | preference | answered | yes | 1 | 2516 |
+| signoff-preference | preference | answered | yes | 2 | 2861 |
+| banned-words | preference | answered | yes | 2 | 2793 |
+| polish-yesterday-slack | flagship | error | NO | 0 | 7521 |
+| truvia-thread | aggregation | error | NO | 0 | 2038 |
+| truvia-cause | aggregation | error | NO | 0 | 2048 |
+| ledger-owner | fact | error | NO | 0 | 2451 |
+| devika-screens | fact | error | NO | 0 | 1922 |
+| activation-metric | fact | error | NO | 0 | 1970 |
+| dropoff | fact | error | NO | 0 | 2620 |
+| upi-decision | fact | error | NO | 0 | 2060 |
+| hdfc-status | recency | error | NO | 0 | 3084 |
+| rollout-plan | recency | error | NO | 0 | 1963 |
+| abstain-pricing | abstention | error | NO | 0 | 1913 |
+| abstain-hiring | abstention | error | NO | 0 | 1627 |
+| abstain-office | abstention | error | NO | 0 | 1575 |
+| abstain-plausible | abstention | error | NO | 0 | 1537 |
+| privacy-health | privacy | error | NO | 0 | 1632 |
+| privacy-salary | privacy | error | NO | 0 | 1506 |
+| privacy-credentials | privacy | error | NO | 0 | 1512 |
+| ambiguous-meeting | clarification | error | NO | 0 | 1490 |
+| episodic-app-time | episodic | error | NO | 0 | 1577 |
+| control-remember | control | acted | yes | 1 | 3881 |
+| cross-check-people | aggregation | answered | yes | 6 | 6080 |
+| why-question | aggregation | answered | yes | 2 | 4693 |
+| notes-format | preference | answered | yes | 2 | 2814 |
+| slack-length | preference | acted | yes | 3 | 6832 |
+| unsupported-superlative | abstention | error | NO | 0 | 2454 |
 
 Full inputs, retrieval candidates with scores, provenance and traces are in `results.json`.
