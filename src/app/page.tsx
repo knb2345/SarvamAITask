@@ -7,7 +7,7 @@ type Citation = { id: string; kind?: string; statement?: string; formatted?: str
 type Turn = {
   role: 'user' | 'kivi';
   text: string;
-  outcome?: string;
+  outcome?: 'answered' | 'abstained' | 'asked' | 'acted' | 'chatted' | string;
   confidence?: string;
   draft?: string;
   citations?: { memories: Citation[]; dictations: Citation[] };
@@ -23,6 +23,11 @@ const STARTERS = [
   'What did we decide about UPI autopay, and why?',
   'What is our new pricing for enterprise merchants?',
 ];
+
+/** An answer only earns the words "from your history" if something came out of it. */
+function hasSources(t: Turn): boolean {
+  return (t.citations?.memories.length ?? 0) + (t.citations?.dictations.length ?? 0) > 0;
+}
 
 export default function HeyKivi() {
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -105,10 +110,14 @@ export default function HeyKivi() {
               {t.outcome && (
                 <div className="outcome">
                   <span className={`dot ${t.outcome}`} />
-                  {t.outcome === 'answered' && `from your history · ${t.confidence} confidence`}
+                  {t.outcome === 'answered' &&
+                    (hasSources(t)
+                      ? `from your history · ${t.confidence} confidence`
+                      : 'answered without a source — treat with care')}
                   {t.outcome === 'abstained' && 'not in your history'}
                   {t.outcome === 'asked' && 'needs one detail'}
                   {t.outcome === 'acted' && 'done'}
+                  {t.outcome === 'chatted' && 'just talking — nothing looked up'}
                 </div>
               )}
               <div className={`kivi-answer${t.outcome === 'abstained' ? ' abstain' : ''}`}>{t.text}</div>

@@ -44,6 +44,8 @@ RESPOND
 - outcome "asked": the request is genuinely ambiguous (two matching things, an unclear
   timeframe) and one short question resolves it. Do not use this to avoid searching.
 - outcome "acted": you wrote a draft or changed what Kivi remembers.
+- outcome "chatted": the person said hello, thanked you, or made small talk. Answer in a
+  few words and do not search. Never present conversation as something you recalled.
 
 Rules that override everything above:
 - Every factual claim in your answer must come from a tool result you cite.
@@ -151,7 +153,7 @@ export const TOOL_DECLARATIONS = [
           type: 'object',
           properties: {
             answer: { type: 'string', description: 'What the person reads or hears. Brief.' },
-            outcome: { type: 'string', enum: ['answered', 'abstained', 'asked', 'acted'] },
+            outcome: { type: 'string', enum: ['answered', 'abstained', 'asked', 'acted', 'chatted'] },
             memory_ids: { type: 'array', items: { type: 'string' } },
             dictation_ids: { type: 'array', items: { type: 'string' } },
             confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
@@ -174,7 +176,7 @@ export type TraceStep = {
 
 export type HeyKiviResult = {
   answer: string;
-  outcome: 'answered' | 'abstained' | 'asked' | 'acted';
+  outcome: 'answered' | 'abstained' | 'asked' | 'acted' | 'chatted';
   confidence: string;
   draft?: string;
   citations: { memories: any[]; dictations: any[] };
@@ -224,6 +226,7 @@ export async function askHeyKivi(userId: string, question: string, history: { ro
       tools: TOOL_DECLARATIONS,
       temperature: 0.1,
       purpose: 'answer',
+      forceToolCall: true,
     });
     modelMs += res.usage.latencyMs;
     inputTokens += res.usage.inputTokens;
@@ -232,9 +235,19 @@ export async function askHeyKivi(userId: string, question: string, history: { ro
 
     const calls = res.parts.filter((p) => p.functionCall);
     if (calls.length === 0) {
-      // The model spoke without using respond(). Take the text, but record it.
-      notes.push('model produced free text instead of calling respond(); treated as an answer with no citations');
-      final = { answer: res.text || 'I could not work that out.', outcome: 'abstained', memory_ids: [], dictation_ids: [] };
+      // The model spoke without using respond(). It has still answered, and its answer
+      // usually names the ids it used — so recover them rather than throwing away a
+      // good reply and calling it a refusal, which is what it is not.
+      const ids = res.text.match(/\b[md]_[a-z0-9]+\b/g) ?? [];
+      notes.push(
+        `model answered in free text instead of calling respond(); recovered ${ids.length} citation(s) from the text`
+      );
+      final = {
+        answer: res.text || 'I could not work that out.',
+        outcome: res.text ? 'answered' : 'abstained',
+        memory_ids: ids.filter((i) => i.startsWith('m_')),
+        dictation_ids: ids.filter((i) => i.startsWith('d_')),
+      };
       break;
     }
 
@@ -283,7 +296,15 @@ export async function askHeyKivi(userId: string, question: string, history: { ro
   ];
   if (invalid.length) notes.push(`dropped ${invalid.length} citation(s) that do not exist: ${invalid.join(', ')}`);
   if (final.outcome === 'answered' && memories.length === 0 && dictations.length === 0) {
-    notes.push('answered with no supporting citation — treat this result as unsupported');
+    // Saying "from your history" about an answer with no source is the very thing this
+    // product exists not to do. If nothing was retrieved, it was conversation.
+    const searched = steps.some((s) => s.tool === 'recall' || s.tool === 'find_dictations');
+    if (!searched) {
+      final.outcome = 'chatted';
+      notes.push('no lookup was performed; recorded as conversation rather than recall');
+    } else {
+      notes.push('answered with no supporting citation — treat this result as unsupported');
+    }
   }
 
   return {

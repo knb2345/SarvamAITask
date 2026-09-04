@@ -36,6 +36,9 @@ export const config = {
   // Retrieval floors: below these, Hey Kivi says it does not know.
   minMemoryScore: Number(process.env.KIVI_MIN_MEMORY_SCORE || 0.30),
   concurrency: Number(process.env.KIVI_INGEST_CONCURRENCY || 6),
+  // How much the model deliberates before answering. "low" keeps Hey Kivi quick enough
+  // to feel like speech; the work here is retrieval, not reasoning from scratch.
+  thinkingLevel: (process.env.KIVI_THINKING_LEVEL || 'low').trim(),
 };
 
 // USD per 1M tokens. Update here if pricing moves; every number in the eval

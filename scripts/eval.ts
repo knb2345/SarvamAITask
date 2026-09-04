@@ -55,14 +55,20 @@ for (const c of cases) {
   const started = Date.now();
   let result: any;
   let error: string | null = null;
-  try {
-    // A run of thirty cases must not be lost to one request that never settles.
-    result = await Promise.race([
+  // A request that stalls on a rate limit is an infrastructure failure, not a wrong
+  // answer, so a case gets one more chance before it counts against the product.
+  const attempt = () =>
+    Promise.race([
       askHeyKivi(userId, c.question),
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('case timed out after 180s')), 180_000)
-      ),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('case timed out after 300s')), 300_000)),
     ]);
+  try {
+    try {
+      result = await attempt();
+    } catch (first: any) {
+      console.log('retrying after ' + String(first?.message ?? first).slice(0, 60) + ' … ');
+      result = await attempt();
+    }
   } catch (e: any) {
     error = String(e?.message ?? e);
     result = { answer: '', outcome: 'error', citations: { memories: [], dictations: [] }, trace: { steps: [], notes: [error], totalMs: Date.now() - started, retrievalMs: 0, modelMs: 0, inputTokens: 0, outputTokens: 0, costUsd: 0, rounds: 0 } };

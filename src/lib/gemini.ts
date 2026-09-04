@@ -159,6 +159,9 @@ export type GenerateOpts = {
   model?: string;
   purpose: string;
   runId?: string;
+  /** Require the model to answer through a tool rather than free text. */
+  forceToolCall?: boolean;
+  thinkingLevel?: string;
 };
 
 export async function generate(opts: GenerateOpts): Promise<{ parts: GenPart[]; text: string; usage: Usage }> {
@@ -166,10 +169,17 @@ export async function generate(opts: GenerateOpts): Promise<{ parts: GenPart[]; 
   const model = opts.model || config.chatModel;
   const body: any = {
     contents: opts.contents,
-    generationConfig: { temperature: opts.temperature ?? 0.2 },
+    generationConfig: {
+      temperature: opts.temperature ?? 0.2,
+      thinkingConfig: { thinkingLevel: opts.thinkingLevel ?? config.thinkingLevel },
+    },
   };
   if (opts.system) body.systemInstruction = { parts: [{ text: opts.system }] };
   if (opts.tools) body.tools = opts.tools;
+  // ANY forces the model to call one of the declared functions. Hey Kivi can then say
+  // "respond() is the only way to speak" as a fact about the request, not a hope about
+  // the prompt — a model that answers in free text carries no outcome and no citations.
+  if (opts.forceToolCall) body.toolConfig = { functionCallingConfig: { mode: 'ANY' } };
   if (opts.jsonSchema) {
     body.generationConfig.responseMimeType = 'application/json';
     body.generationConfig.responseSchema = opts.jsonSchema;

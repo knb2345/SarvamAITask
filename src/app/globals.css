@@ -103,6 +103,7 @@ h2 { font-size: 15px; font-weight: 600; margin: 30px 0 12px; }
 .dot.abstained { background: var(--muted-2); }
 .dot.asked { background: var(--amber); }
 .dot.acted { background: var(--green); }
+.dot.chatted { background: var(--muted-2); }
 
 .draft {
   margin-top: 14px; padding: 15px 17px;
