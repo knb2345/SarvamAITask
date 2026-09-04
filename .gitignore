@@ -9,3 +9,4 @@ next-env.d.ts
 ingest.log
 eval.log
 dev.log
+eval/results/results.partial.json
