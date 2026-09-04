@@ -41,6 +41,23 @@ function allKeysSpent(family: Family): boolean {
   return exhausted[family].size >= config.geminiKeys.length;
 }
 
+/**
+ * Round-robin to the next key that has not hit a daily wall. Used for per-minute rate
+ * limits, where another key is available immediately.
+ */
+function nextKey(family: Family): boolean {
+  const keys = config.geminiKeys;
+  if (keys.length < 2) return false;
+  for (let i = 1; i <= keys.length; i++) {
+    const candidate = (keyIndex[family] + i) % keys.length;
+    if (!exhausted[family].has(candidate)) {
+      keyIndex[family] = candidate;
+      return true;
+    }
+  }
+  return false;
+}
+
 export function keyStatus() {
   return {
     keys: config.geminiKeys.length,
@@ -90,6 +107,11 @@ async function post(
         // treating a rate limit as exhaustion throws away a perfectly good key.
         const daily = /PerDay|per day|RequestsPerDayPerProject/i.test(text);
         if (res.status === 429 && daily && rotateKey(family, text)) {
+          continue;
+        }
+        // A per-minute limit is per key. With more than one key, moving to the next is
+        // instant where waiting costs a minute — so try the others before backing off.
+        if (res.status === 429 && !daily && nextKey(family)) {
           continue;
         }
         if (res.status === 429 && daily && allKeysSpent(family)) {

@@ -34,7 +34,7 @@ const stats = await ingest(records, userId, (done, total, note) => {
     lastNote = note;
     process.stdout.write(`\r  ${note}: ${done}/${total}   `);
   }
-});
+}, { shiftToToday: shift });
 process.stdout.write('\n');
 console.log(JSON.stringify(stats, null, 2));
 console.log(`\ndb grew from ${(stats.dbBytesBefore / 1024).toFixed(0)}KB to ${(stats.dbBytesAfter / 1024).toFixed(0)}KB`);
