@@ -83,23 +83,64 @@ corpus (jsonl)
 
 Hey Kivi:  question → tools(recall, find_dictations, open_dictation, draft_text,
                             remember, forget) → respond(answer, outcome, citations)
-           retrieval = dense (Gemini embeddings) ⊕ BM25 (FTS5), fused by RRF,
-                       weighted by support count, confidence and (for episodes) recency
+           retrieval = dense (embeddings) ⊕ BM25 (FTS5), fused by RRF, weighted by
+                       support count, confidence and (for episodes) recency
 ```
 
-### What a memory is
+The two model workloads have opposite shapes, so they are routed independently.
+Extraction is roughly a hundred large batched calls; Hey Kivi is many small ones where
+latency is what the person feels. Free tiers are metered on opposite axes — Gemini by
+requests per day, Groq by tokens per minute — so each workload goes where its limit is
+not the binding one, and either can be pinned with `KIVI_EXTRACT_PROVIDER` and
+`KIVI_CHAT_PROVIDER`. Embeddings stay on Gemini (Groq has none) with a local hashing
+embedder as the last resort. Every call records which model served it.
 
-One claim, in the third person, self-contained, that will still be useful in a month —
-plus the sentence that produced it. Three kinds:
+### Three layers, not one
 
-| kind | what it is | why it exists |
-| --- | --- | --- |
-| `fact` | durable, checkable things about the work: dates, owners, decisions, numbers | most questions are factual |
-| `preference` | how this person wants language produced, stated as a rule | this is what makes drafts sound like them |
-| `episode` | one line per dictation: what it was, where it went, when | makes "the thing I sent at 5pm" findable, and keeps transient content *out* of facts |
+The distinction that makes the rest coherent is between what Kivi *kept* and what Kivi
+*learned*. They are different things with different rules, and conflating them is how a
+memory product ends up either useless or untrustworthy.
 
-Facts and preferences are scarce and heavily deduplicated. Episodes are dense — exactly one
-per dictation, never merged — and act as the index over what happened.
+```
+source history    every dictation, stored whole and searchable.
+                  Nothing is summarised away; this is the person's own record.
+      |
+      v
+index             one episode per dictation: what it was, where it went, when.
+                  Derived, cheap, non-authoritative. It makes "the update I sent
+                  around 5pm" findable without promoting its contents to a claim.
+      |
+      v
+semantic memory   the small set of facts and preferences promoted because they will
+                  still matter in a month. This is what Kivi will act on and repeat.
+```
+
+Only the third layer makes claims. That is why the transient content of a single
+message is never a fact — it lives in source history, where it can be found but not
+asserted — and why "anything you ever said stays findable" and "most of it is thrown
+away" are both true without contradiction.
+
+| layer | kind | what it is | why it exists |
+| --- | --- | --- | --- |
+| source | `dictations` | raw ASR, formatted output, app, time | the record; nothing else is authoritative |
+| index | `episode` | one line per dictation | time-and-app recall, and keeping content out of facts |
+| memory | `fact` | durable, checkable things: dates, owners, decisions, numbers | most questions are factual |
+| memory | `preference` | how this person wants language produced, stated as a rule | this is what makes drafts sound like them |
+
+Facts and preferences are scarce and heavily deduplicated: 166 facts and 7 preferences
+from 499 dictations. Episodes are dense, one per dictation, and never merged.
+
+### Inference, not guessing
+
+Kivi is expected to combine things. The Truvia story takes three dictations across three
+weeks and no single message contains it; assembling that *is* the product. What it must
+not do is turn an assumption into a fact.
+
+The line is grounded synthesis versus unsupported assertion, and it is enforced rather
+than asked for: a memory is only written if the model can quote the sentence that
+created it and that quote is found in the dictation; an answer's citations are checked
+for existence *and* for actually bearing on what was said; and only an assertion becomes
+a fact — a question, a suggestion, a hypothetical or someone else's opinion does not.
 
 ### What it deliberately ignores
 
@@ -182,53 +223,81 @@ Results, including the failures, are in [`eval/results/results.md`](eval/results
 
 ## What the evaluation found, and what changed because of it
 
-The first full evaluation run scored **22/30 question cases and 2/6 memory-state checks**, and
-it earned its place by finding two real architectural faults rather than cosmetic ones.
+Running the evaluation repeatedly, against real limits rather than imagined ones, found
+five faults. None was cosmetic, and three would have failed in front of a reviewer.
 
-**Privacy leaked through episodes.** The memory writer correctly refused to store facts or
-preferences about health, money or family — but an episode was written for *every* dictation,
-and an episode summarises the very content the rules exclude. Kivi had stored *"The user sent a
-WhatsApp message to their sister about having a migraine and booking a neurologist
-appointment."* The rule was enforced in one layer and not the other.
+**A re-import silently destroyed every memory's provenance.** Importing a corpus that had
+already been read left 361 of 521 memories unable to show the sentence they came from.
+`INSERT OR REPLACE` deletes the existing row before inserting, and everything referencing
+a dictation cascades on delete — so re-running the importer took the evidence with it.
+This is exactly what a reviewer importing their own corpus would have hit. Dictations are
+upserted in place now, and a memory-state check fails the evaluation if any inferred
+memory has lost its evidence.
 
-The fix moves the decision to where it can only be made once: extraction now classifies each
-dictation `work` or `personal` **before** anything else, a personal one produces no episode and
-no memories (enforced in code as well as in the prompt), the classification is stored on the
-dictation (`003_sensitivity.sql`), and both Hey Kivi retrieval tools exclude those rows. Kivi
-says so plainly instead of pretending the history is empty. `/history` labels them, `/inspect`
-counts them, and a memory-state check now fails if any active memory has evidence from a
-personal dictation.
+**A citation existed but did not support the answer.** Kivi answered "the V2 launch is set
+for December 5 2026" — correct — and cited a memory reading "Vikram mandated a freeze on
+everything for the HDFC launch". The answer was right and the citation was a real row, so
+every check passed. But a citation is how the person checks Kivi, and pointing them
+somewhere unrelated makes an unsupported claim look sourced. Citations are now verified
+for support as well as existence.
 
-**Supersession silently failed.** Both launch dates stayed active at once and Kivi answered with
-the stale one. Reading was hybrid; *writing* was dense-only — reconciliation looked for
-duplicate candidates by vector similarity alone, so when the embedder scored two contradictory
-statements far apart, no adjudication ever happened. Candidate lookup is now hybrid as well, and
-the closest few candidates are adjudicated rather than only the single closest: the older launch
-date came back *third* in the lexical ranking, behind two episodes about the same subject.
+**Privacy leaked through episodes.** The memory writer refused to store facts about health
+or money, but an episode was written for *every* dictation, and an episode summarises the
+very content the rules exclude. Kivi had stored "the user sent a WhatsApp message to their
+sister about having a migraine and booking a neurologist appointment". The decision now
+happens once, at extraction: a dictation classified personal produces no episode and no
+memories, is excluded from every Hey Kivi lookup, and is labelled in `/history`.
 
-One failure was the evaluation's fault, not the product's: `signoff-preference` failed because
-Kivi correctly answered *"never use Warm regards"*, and a substring assertion cannot tell a
-quotation from a usage. That assertion was corrected.
+**Supersession missed contradictions.** Both launch dates stayed active at once and Kivi
+answered with the stale one. Reading was hybrid but *writing* was dense-only, so when the
+embedder scored two contradictory statements far apart, no adjudication happened. The
+older date came back third in the lexical ranking, behind two episodes about the same
+subject — so the writer is hybrid too now, and judges the closest few candidates rather
+than only the closest.
+
+**The product asserted provenance it did not have.** Saying "hi" came back labelled "from
+your history, high confidence" after zero lookups, and took 24 seconds. Conversation is
+now a distinct outcome, the interface refuses to claim a source it does not have, and the
+thinking budget was cut: 24.3s to 1.6s for a greeting, and about 2.5s for a real question.
+
+Two failures were the evaluation's fault rather than the product's, and were corrected:
+assertions that banned words Kivi may legitimately quote while explaining a refusal
+("never use Warm regards"; "I looked for salary and found nothing"), and free-text answers
+being recorded as refusals when they were correct and cited.
 
 ## Limitations
 
-- **One user.** No multi-tenant separation beyond a `user_id` column and no auth; the demo
-  operates as `KIVI_USER_ID`.
-- **Retrieval is a flat scan.** Correct and fast at this scale; it would need an ANN index
-  well before a million memories.
-- **Extraction quality is the ceiling.** Everything downstream depends on the memory writer's
-  judgement. The groundedness gate catches invented quotes, but a wrong-but-quotable reading
-  of an ambiguous sentence will still get through — which is why every memory shows its
-  source sentence and can be deleted in one tap.
+Written after running the thing, not before.
+
+- **"Personal" is a model's judgement.** Seven dictations were classified personal and
+  nothing was learned from them, but this is classification, not a guarantee. Every
+  decision is visible in `/history`, which is the honest mitigation: you can see what it
+  refused, and disagree.
+- **Episodes are one row per dictation.** Five hundred rows the person never asked for.
+  They earn it — time-and-app recall depends on them, and they keep transient content out
+  of the fact layer — but it is a real cost and the reason the memory page filters by kind.
 - **Reconciliation is pairwise.** A candidate is compared against its nearest existing
-  memory, not against a cluster; three-way contradictions are resolved in arrival order.
-- **The model is not evaluated by another model.** Assertions are deterministic (outcome,
-  substring, citation, memory-state), which makes them reproducible but coarser than a judge
+  memories, not against a cluster, and three-way contradictions are resolved in arrival
+  order. It also over-fires occasionally: an early run retired "Rahul is the engineering
+  lead" on the strength of a sentence that was not an assertion at all, which is what the
+  assertion rule in extraction now exists to prevent.
+- **Citation support is lexical.** A cited memory must share real content with the answer.
+  That catches the case actually observed — a correct answer about the launch date cited
+  to an unrelated memory about freezing scope — but it is an overlap heuristic, not
+  entailment, and it will pass a citation that is topical yet beside the point.
+- **Retrieval is a flat scan.** Correct and quick at this scale; it would need an ANN
+  index well before a million memories.
+- **One user.** A `user_id` column and no authentication. The demo operates as
+  `KIVI_USER_ID`.
+- **Free-tier limits dominate wall-clock, not the system.** Answering is fast — p50 under
+  three seconds. Ingesting 499 dictations is about 120 model calls and the evaluation
+  about 150, which sits inside a paid tier comfortably and awkwardly across free-tier
+  ceilings: Gemini meters requests per day, Groq meters tokens per minute. Hence key
+  rotation, resumable ingestion, and a pacing option on the evaluation. None of it is
+  needed with a paid key.
+- **The model is not judged by another model.** Assertions are deterministic — outcome,
+  substring, citation, database state — which is reproducible but coarser than a judge
   would be for open-ended answers.
-- **Free-tier rate limits dominate wall-clock.** Ingestion is minutes of work and tens of
-  minutes of waiting on a free key. On a paid key it is roughly 5 minutes.
-- **No speech.** Per the brief, dictations are replayed from a corpus; the interface types
-  what you would say.
 
 ## AI use
 

@@ -31,7 +31,12 @@ cp .env.example .env
 
 | Variable | Required | Default | What it does |
 | --- | --- | --- | --- |
-| `GEMINI_API_KEY` | **yes** | — | Google AI Studio (Gemini API) key |
+| `GROQ_API_KEY` | no | — | Groq key. When present Groq answers Hey Kivi by default — far faster than the Gemini free tier |
+| `GROQ_API_KEYS` | no | — | Extra Groq keys, comma separated, rotated on rate limits |
+| `KIVI_CHAT_PROVIDER` | no | `auto` | who answers Hey Kivi: `auto` (Groq if keyed), `groq`, `gemini` |
+| `KIVI_EXTRACT_PROVIDER` | no | `gemini` | who reads dictations. Extraction sends few large batches, which suits Gemini's per-day limit better than Groq's per-minute one |
+| `KIVI_EVAL_PACE_MS` | no | `0` | pause between evaluation cases. Set to `20000`–`60000` on a free tier so the run spends its budget answering rather than in retry back-off |
+| `GEMINI_API_KEY` | **yes** | — | Google AI Studio key. Required for embeddings even when Groq generates |
 | `GEMINI_API_KEYS` | no | — | Extra keys, comma separated. When one key's daily free-tier quota runs out mid-run the client switches to the next instead of stalling |
 | `KIVI_DB_PATH` | no | `./db/kivi.db` | SQLite file |
 | `KIVI_CHAT_MODEL` | no | `gemini-3.5-flash-lite` | Hey Kivi's model. Use `gemini-3.5-flash` on a paid key for better answers |
