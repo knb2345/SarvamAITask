@@ -15,14 +15,22 @@ import type { Memory, ScoredDictation, ScoredMemory } from './types';
 const RRF_K = 60;
 
 /**
- * Which embedder built this database. Vectors from different providers are not
- * comparable, so the query is embedded with whichever one the stored vectors came from.
+ * Which embedders built this database.
+ *
+ * A database can legitimately hold vectors from more than one provider: a run that meets
+ * a rate limit falls back for a batch and returns to the API afterwards. Cosine scores
+ * from two providers are not comparable - but ranks are, and fusion here is by rank. So
+ * each space is searched on its own and the rankings are fused, rather than pretending
+ * one number means the same thing in both.
  */
+export function storedProviders(table: 'memory_embeddings' | 'dictation_embeddings'): ('gemini' | 'local')[] {
+  return (db()
+    .prepare(`SELECT provider, COUNT(*) c FROM ${table} GROUP BY provider ORDER BY c DESC`)
+    .all() as any[]).map((r) => r.provider);
+}
+
 export function storedProvider(table: 'memory_embeddings' | 'dictation_embeddings'): 'gemini' | 'local' | null {
-  const row = db()
-    .prepare(`SELECT provider, COUNT(*) c FROM ${table} GROUP BY provider ORDER BY c DESC LIMIT 1`)
-    .get() as any;
-  return row?.provider ?? null;
+  return storedProviders(table)[0] ?? null;
 }
 
 function rrf(rank: number): number {
@@ -63,24 +71,25 @@ export async function searchMemories(opts: MemorySearchOpts): Promise<ScoredMemo
   if (pool.length === 0) return [];
   const allowed = new Set(pool.map((m) => m.id));
 
-  // Dense
-  let vecRanked: { id: string; score: number }[] = [];
-  const provider = storedProvider('memory_embeddings');
-  try {
-    if (!provider) throw new Error('no vectors stored');
-    const [qv] = (await embedWithProvider([opts.query], 'RETRIEVAL_QUERY', undefined, provider)).vectors;
-    if (qv) {
+  // Dense - one ranking per embedding space present, fused below by rank.
+  const vecRankings: { id: string; score: number }[][] = [];
+  for (const provider of storedProviders('memory_embeddings')) {
+    try {
+      const [qv] = (await embedWithProvider([opts.query], 'RETRIEVAL_QUERY', undefined, provider)).vectors;
+      if (!qv) continue;
       const rows = db()
         .prepare('SELECT memory_id, vec FROM memory_embeddings WHERE provider = ?')
         .all(provider) as any[];
-      vecRanked = rows
-        .filter((r) => allowed.has(r.memory_id))
-        .map((r) => ({ id: r.memory_id, score: cosine(qv, fromBlob(r.vec)) }))
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 60);
+      vecRankings.push(
+        rows
+          .filter((r) => allowed.has(r.memory_id))
+          .map((r) => ({ id: r.memory_id, score: cosine(qv, fromBlob(r.vec)) }))
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 60)
+      );
+    } catch {
+      // Dense retrieval is best-effort; lexical still answers.
     }
-  } catch {
-    // Dense retrieval is best-effort; lexical still answers.
   }
 
   // Lexical
@@ -96,9 +105,18 @@ export async function searchMemories(opts: MemorySearchOpts): Promise<ScoredMemo
     bmRanked = rows.filter((r) => allowed.has(r.memory_id)).map((r) => ({ id: r.memory_id, score: -r.b }));
   }
 
-  const vecRank = new Map(vecRanked.map((r, i) => [r.id, i + 1]));
+  // Best rank a memory reached in any embedding space, with its score there.
+  const vecRank = new Map<string, number>();
+  const vecScore = new Map<string, number>();
+  for (const ranking of vecRankings) {
+    ranking.forEach((r, i) => {
+      if (!vecRank.has(r.id) || i + 1 < vecRank.get(r.id)!) {
+        vecRank.set(r.id, i + 1);
+        vecScore.set(r.id, r.score);
+      }
+    });
+  }
   const bmRank = new Map(bmRanked.map((r, i) => [r.id, i + 1]));
-  const vecScore = new Map(vecRanked.map((r) => [r.id, r.score]));
   const bmScore = new Map(bmRanked.map((r) => [r.id, r.score]));
 
   const now = Date.now();
@@ -166,23 +184,24 @@ export async function searchDictations(opts: DictationSearchOpts): Promise<Score
   }
 
   const allowed = new Set(pool.map((d) => d.id));
-  let vecRanked: { id: string; score: number }[] = [];
-  const provider = storedProvider('dictation_embeddings');
-  try {
-    if (!provider) throw new Error('no vectors stored');
-    const [qv] = (await embedWithProvider([opts.query], 'RETRIEVAL_QUERY', undefined, provider)).vectors;
-    if (qv) {
+  const vecRankings: { id: string; score: number }[][] = [];
+  for (const provider of storedProviders('dictation_embeddings')) {
+    try {
+      const [qv] = (await embedWithProvider([opts.query], 'RETRIEVAL_QUERY', undefined, provider)).vectors;
+      if (!qv) continue;
       const rows = db()
         .prepare('SELECT dictation_id, vec FROM dictation_embeddings WHERE provider = ?')
         .all(provider) as any[];
-      vecRanked = rows
-        .filter((r) => allowed.has(r.dictation_id))
-        .map((r) => ({ id: r.dictation_id, score: cosine(qv, fromBlob(r.vec)) }))
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 60);
+      vecRankings.push(
+        rows
+          .filter((r) => allowed.has(r.dictation_id))
+          .map((r) => ({ id: r.dictation_id, score: cosine(qv, fromBlob(r.vec)) }))
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 60)
+      );
+    } catch {
+      /* lexical fallback */
     }
-  } catch {
-    /* lexical fallback */
   }
 
   const match = ftsEscape(opts.query);
@@ -197,9 +216,17 @@ export async function searchDictations(opts: DictationSearchOpts): Promise<Score
     bmRanked = rows.filter((r) => allowed.has(r.dictation_id)).map((r) => ({ id: r.dictation_id, score: -r.b }));
   }
 
-  const vecRank = new Map(vecRanked.map((r, i) => [r.id, i + 1]));
+  const vecRank = new Map<string, number>();
+  const vecScore = new Map<string, number>();
+  for (const ranking of vecRankings) {
+    ranking.forEach((r, i) => {
+      if (!vecRank.has(r.id) || i + 1 < vecRank.get(r.id)!) {
+        vecRank.set(r.id, i + 1);
+        vecScore.set(r.id, r.score);
+      }
+    });
+  }
   const bmRank = new Map(bmRanked.map((r, i) => [r.id, i + 1]));
-  const vecScore = new Map(vecRanked.map((r) => [r.id, r.score]));
   const bmScore = new Map(bmRanked.map((r) => [r.id, r.score]));
 
   const byId = new Map(pool.map((d) => [d.id, d]));
@@ -229,7 +256,8 @@ export async function findSimilarMemories(
   kind: string,
   vec: Float32Array | undefined,
   topK = 5,
-  statement?: string
+  statement?: string,
+  provider?: string
 ): Promise<{ memory: Memory; similarity: number; lexical: number }[]> {
   const pool = db()
     .prepare(`SELECT * FROM memories WHERE user_id = ? AND kind = ? AND status = 'active'`)
@@ -239,10 +267,10 @@ export async function findSimilarMemories(
 
   const similarity = new Map<string, number>();
   if (vec) {
-    const prov = storedProvider('memory_embeddings');
+    // A candidate is only ever compared inside its own embedding space.
     const vecs = db()
       .prepare('SELECT memory_id, vec FROM memory_embeddings WHERE provider = ?')
-      .all(prov ?? 'local') as any[];
+      .all(provider ?? storedProvider('memory_embeddings') ?? 'local') as any[];
     for (const r of vecs) {
       if (byId.has(r.memory_id)) similarity.set(r.memory_id, cosine(vec, fromBlob(r.vec)));
     }

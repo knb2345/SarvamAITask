@@ -1,0 +1,2539 @@
+{
+  "in_progress": true,
+  "completed": 14,
+  "of": 30,
+  "cases": [
+    {
+      "id": "launch-date-current",
+      "group": "supersession",
+      "question": "When does merchant onboarding V2 launch?",
+      "why_this_case_exists": "The date moved. Answering with the old one is the failure this whole design is meant to prevent.",
+      "expected": {
+        "outcome": "answered",
+        "any_of": [
+          "5th of december",
+          "december 5",
+          "5 december"
+        ],
+        "cite_planted": "launch_date_new"
+      },
+      "passed": true,
+      "failures": [],
+      "error": null,
+      "outcome": "answered",
+      "confidence": "high",
+      "answer": "You said on Slack on July 24, 2026, that merchant onboarding V2 is launching on December 5, 2026.",
+      "draft": null,
+      "citations": {
+        "memories": [
+          {
+            "id": "m_mtms591miyyy0f",
+            "kind": "fact",
+            "statement": "The user set the V2 launch date for the 5th of December 2026.",
+            "confidence": 0.95,
+            "support_count": 1,
+            "source": "inferred",
+            "provenance": [
+              "d_00348"
+            ]
+          }
+        ],
+        "dictations": [
+          {
+            "id": "d_00348",
+            "spoken_at": "2026-07-24T16:31:00.000Z",
+            "app": "slack",
+            "formatted": "Hey team, listening to the HDFC sandbox updates, it slipped again. So we are officially pushing the V2 launch to the 5th of December, and this is final, no more changes."
+          }
+        ]
+      },
+      "reasoning_trace": {
+        "rounds": 3,
+        "notes": [],
+        "steps": [
+          {
+            "tool": "recall",
+            "args": {
+              "query": "merchant onboarding V2 launch date"
+            },
+            "ms": 841,
+            "summary": "10 of 10 candidate memories passed the relevance floor (0.3)",
+            "candidates": [
+              {
+                "id": "m_mtmsijc3v4jnts",
+                "kind": "fact",
+                "text": "Over 12,000 merchants were onboarded during the week of August 15, 2026.",
+                "score": 0.7001,
+                "vec": 0.4876,
+                "bm25": 2.282,
+                "used": true
+              },
+              {
+                "id": "m_mtmqursi6n10c3",
+                "kind": "episode",
+                "text": "The user sent a Slack message announcing the merchant onboarding V2 launch date.",
+                "score": 0.6793,
+                "vec": 0.7991,
+                "bm25": 20.625,
+                "used": true
+              },
+              {
+                "id": "m_mtms591miyyy0f",
+                "kind": "fact",
+                "text": "The user set the V2 launch date for the 5th of December 2026.",
+                "score": 0.6769,
+                "vec": 0.4009,
+                "bm25": 18.621,
+                "used": true
+              },
+              {
+                "id": "m_mtms8gzqc8fxzl",
+                "kind": "fact",
+                "text": "The biggest drop-off in merchant onboarding is at the bank account verification step, where 34 percent of merchants abandon.",
+                "score": 0.6442,
+                "vec": 0.5013,
+                "bm25": 2.083,
+                "used": true
+              },
+              {
+                "id": "m_mtms4zefwhos7d",
+                "kind": "episode",
+                "text": "The user sent a standup update on Slack regarding merchant onboarding progress.",
+                "score": 0.6186,
+                "vec": 0.5319,
+                "bm25": 2.229,
+                "used": true
+              },
+              {
+                "id": "m_mtms4zea7jtdup",
+                "kind": "episode",
+                "text": "The user dictated a Gmail standup update reporting that merchant onboarding hit 10,000 merchants.",
+                "score": 0.6184,
+                "vec": 0.5277,
+                "bm25": 2.286,
+                "used": true
+              },
+              {
+                "id": "m_mtmspsq8y1jwlq",
+                "kind": "episode",
+                "text": "The user dictated a standup update for Linear about merchant onboarding numbers for Kavach Pay.",
+                "score": 0.6108,
+                "vec": 0.4734,
+                "bm25": 2.154,
+                "used": true
+              },
+              {
+                "id": "m_mtms5ggtpcug1u",
+                "kind": "episode",
+                "text": "The user dictated an email to Vikram providing an update on merchant onboarding at Kavach Pay.",
+                "score": 0.577,
+                "vec": 0.494,
+                "bm25": 2.154,
+                "used": true
+              }
+            ]
+          },
+          {
+            "tool": "open_dictation",
+            "args": {
+              "dictation_id": "d_00348"
+            },
+            "ms": 1,
+            "summary": "opened d_00348 (slack, 2026-07-24T16:31)",
+            "candidates": []
+          }
+        ]
+      },
+      "metrics": {
+        "total_ms": 7113,
+        "retrieval_ms": 841,
+        "model_ms": 6258,
+        "input_tokens": 8577,
+        "output_tokens": 138,
+        "cost_usd": 0.0009129
+      }
+    },
+    {
+      "id": "launch-date-history",
+      "group": "supersession",
+      "question": "Did the V2 launch date ever change? What was it before?",
+      "why_this_case_exists": "Superseded memories are history, not deletions. Kivi should be able to say what it used to believe.",
+      "expected": {
+        "outcome": "answered",
+        "any_of": [
+          "14th of november",
+          "november 14",
+          "14 november"
+        ],
+        "cite_planted": null
+      },
+      "passed": false,
+      "failures": [
+        "outcome was \"abstained\", expected answered"
+      ],
+      "error": null,
+      "outcome": "abstained",
+      "confidence": "medium",
+      "answer": "Yes, you changed it. It was originally locked for November 14th (d_00091), and you later pushed it to December 5th due to HDFC sandbox updates (d_00348).",
+      "draft": null,
+      "citations": {
+        "memories": [],
+        "dictations": []
+      },
+      "reasoning_trace": {
+        "rounds": 3,
+        "notes": [
+          "model produced free text instead of calling respond(); treated as an answer with no citations"
+        ],
+        "steps": [
+          {
+            "tool": "recall",
+            "args": {
+              "query": "V2 launch date"
+            },
+            "ms": 610,
+            "summary": "10 of 10 candidate memories passed the relevance floor (0.3)",
+            "candidates": [
+              {
+                "id": "m_mtms591miyyy0f",
+                "kind": "fact",
+                "text": "The user set the V2 launch date for the 5th of December 2026.",
+                "score": 0.8742,
+                "vec": 0.668,
+                "bm25": 18.621,
+                "used": true
+              },
+              {
+                "id": "m_mtmsi33bgonwky",
+                "kind": "fact",
+                "text": "Devika finalised the designs for the HDFC launch.",
+                "score": 0.8142,
+                "vec": 0.2242,
+                "bm25": 6.095,
+                "used": true
+              },
+              {
+                "id": "m_mtmrfkm6p5hzft",
+                "kind": "fact",
+                "text": "Vikram stated that everything must be frozen for the HDFC launch.",
+                "score": 0.8142,
+                "vec": 0.2513,
+                "bm25": 5.713,
+                "used": true
+              },
+              {
+                "id": "m_mtmrw8h2e7szn1",
+                "kind": "fact",
+                "text": "The ledger migration has to be done before the December launch.",
+                "score": 0.7897,
+                "vec": 0.1551,
+                "bm25": 5.625,
+                "used": true
+              },
+              {
+                "id": "m_mtms5jb6411fpj",
+                "kind": "fact",
+                "text": "The onboarding API v2 authentication token expires every 24 hours.",
+                "score": 0.7842,
+                "vec": 0.1084,
+                "bm25": 5.273,
+                "used": true
+              },
+              {
+                "id": "m_mtmsp8b6clpmdl",
+                "kind": "fact",
+                "text": "The user's V2 rollout plan starts with a phased release to 200 merchants, then expands across Karnataka, and finally goes national.",
+                "score": 0.7264,
+                "vec": 0.0915,
+                "bm25": 4.432,
+                "used": true
+              },
+              {
+                "id": "m_mtms55z9bri9q9",
+                "kind": "episode",
+                "text": "The user sent a Slack message announcing that the V2 launch is delayed to the 5th of December due to HDFC sandbox updates.",
+                "score": 0.7185,
+                "vec": 0.3178,
+                "bm25": 9.751,
+                "used": true
+              },
+              {
+                "id": "m_mtms5b5bhs02pg",
+                "kind": "fact",
+                "text": "Devika asked if the system can support v2 payloads for the onboarding API endpoint.",
+                "score": 0.6925,
+                "vec": 0.065,
+                "bm25": 4.212,
+                "used": true
+              }
+            ]
+          },
+          {
+            "tool": "find_dictations",
+            "args": {
+              "query": "V2 launch date"
+            },
+            "ms": 39,
+            "summary": "8 dictations matched (8 personal dictations are excluded from every search)",
+            "candidates": [
+              {
+                "id": "d_00348",
+                "text": "Hey team, listening to the HDFC sandbox updates, it slipped again. So we are officially pushing the V2 launch to the 5th of December, and th",
+                "score": 0.9919,
+                "vec": 0.2674,
+                "bm25": 10.743,
+                "used": true
+              },
+              {
+                "id": "d_00091",
+                "text": "Hey team, um, so just wanted to update you all that the merchant onboarding V2 launch date is officially locked for the 14th of November. Ra",
+                "score": 0.9919,
+                "vec": 0.2067,
+                "bm25": 13.071,
+                "used": true
+              },
+              {
+                "id": "d_00205",
+                "text": "Look, we honestly cannot add the multi-currency wallet to this sprint scope because Vikram already said we need to freeze everything for the",
+                "score": 0.9534,
+                "vec": 0.1095,
+                "bm25": 5.402,
+                "used": true
+              },
+              {
+                "id": "d_00284",
+                "text": "Hey Rahul, just confirming you own the ledger migration, right? It has to be done before the December launch.",
+                "score": 0.9387,
+                "vec": 0.0805,
+                "bm25": 6.092,
+                "used": true
+              },
+              {
+                "id": "d_00435",
+                "text": "Look, we can't add custom webhook fields for just one merchant right now. Devika already finalised the designs, and expanding scope will del",
+                "score": 0.9314,
+                "vec": 0.0984,
+                "bm25": 5.402,
+                "used": true
+              },
+              {
+                "id": "d_00301",
+                "text": "Devika, please take up the redesign of the three merchant onboarding screens. Target date is 20th of August. Make sure it matches the new Ka",
+                "score": 0.8347,
+                "vec": 0.0462,
+                "bm25": 6.391,
+                "used": true
+              },
+              {
+                "id": "d_00352",
+                "text": "So basically, about the onboarding API endpoint, Devika asked if we can support v2 payloads. Yeah, we can, just make sure you check the head",
+                "score": 0.814,
+                "vec": 0.0478,
+                "bm25": 4.614,
+                "used": true
+              },
+              {
+                "id": "d_00409",
+                "text": "Answering Rahul about the onboarding API: yes, the v2 endpoint accepts nested JSON objects for bank details, so you don't need to flatten th",
+                "score": 0.7842,
+                "vec": 0.0471,
+                "bm25": 3.549,
+                "used": true
+              }
+            ]
+          },
+          {
+            "tool": "open_dictation",
+            "args": {
+              "dictation_id": "d_00091"
+            },
+            "ms": 1,
+            "summary": "opened d_00091 (slack, 2026-05-27T10:53)",
+            "candidates": []
+          },
+          {
+            "tool": "open_dictation",
+            "args": {
+              "dictation_id": "d_00348"
+            },
+            "ms": 0,
+            "summary": "opened d_00348 (slack, 2026-07-24T16:31)",
+            "candidates": []
+          }
+        ]
+      },
+      "metrics": {
+        "total_ms": 10114,
+        "retrieval_ms": 649,
+        "model_ms": 9462,
+        "input_tokens": 10652,
+        "output_tokens": 139,
+        "cost_usd": 0.0011208000000000001
+      }
+    },
+    {
+      "id": "standup-preference",
+      "group": "preference",
+      "question": "How do I like standup updates written?",
+      "why_this_case_exists": "A standing preference stated once and repeated twice should be one memory, not three.",
+      "expected": {
+        "outcome": "answered",
+        "any_of": [
+          "three",
+          "3 bullet",
+          "bullets"
+        ],
+        "cite_planted": "pref_standup_bullets"
+      },
+      "passed": true,
+      "failures": [],
+      "error": null,
+      "outcome": "answered",
+      "confidence": "high",
+      "answer": "You prefer standup updates written as three short bullets, with no paragraphs and no greeting at the top (memory m_mtmqr7vcprna87).",
+      "draft": null,
+      "citations": {
+        "memories": [
+          {
+            "id": "m_mtmqr7vcprna87",
+            "kind": "preference",
+            "statement": "The user prefers standup updates to be written as three short bullets with no paragraphs and no greeting.",
+            "confidence": 0.978875,
+            "support_count": 3,
+            "source": "inferred",
+            "provenance": [
+              "d_00069",
+              "d_00360",
+              "d_00454"
+            ]
+          }
+        ],
+        "dictations": []
+      },
+      "reasoning_trace": {
+        "rounds": 2,
+        "notes": [],
+        "steps": [
+          {
+            "tool": "recall",
+            "args": {
+              "query": "standup updates format preference"
+            },
+            "ms": 721,
+            "summary": "10 of 10 candidate memories passed the relevance floor (0.3)",
+            "candidates": [
+              {
+                "id": "m_mtmqr7vcprna87",
+                "kind": "preference",
+                "text": "The user prefers standup updates to be written as three short bullets with no paragraphs and no greeting.",
+                "score": 0.941,
+                "vec": 0.5341,
+                "bm25": 13.694,
+                "used": true
+              },
+              {
+                "id": "m_mtmsj4s4vvg1t4",
+                "kind": "episode",
+                "text": "The user dictated a Slack message reminding the team about standup update formatting.",
+                "score": 0.7829,
+                "vec": 0.4978,
+                "bm25": 13.576,
+                "used": true
+              },
+              {
+                "id": "m_mtms3npnglzadr",
+                "kind": "preference",
+                "text": "The user prefers Slack messages to be under four sentences, with anything longer going into a Notion doc with a link.",
+                "score": 0.7302,
+                "vec": 0.2845,
+                "bm25": 5.247,
+                "used": true
+              },
+              {
+                "id": "m_mtmsi4crf6wpwe",
+                "kind": "episode",
+                "text": "The user dictated a standup update in Linear regarding merchant onboarding progress and metrics.",
+                "score": 0.7199,
+                "vec": 0.2663,
+                "bm25": 7.674,
+                "used": true
+              },
+              {
+                "id": "m_mtmsj4qw8zdzco",
+                "kind": "preference",
+                "text": "The user prefers to use camelCase instead of snake_case for webhook payloads because the rest of the Kavach services use that.",
+                "score": 0.7153,
+                "vec": 0.2498,
+                "bm25": 6.292,
+                "used": true
+              },
+              {
+                "id": "m_mtmrr0gbi8xv72",
+                "kind": "preference",
+                "text": "The user prefers meeting notes to start with decisions taken, followed by owners, with open questions at the bottom.",
+                "score": 0.6841,
+                "vec": 0.2195,
+                "bm25": 6.156,
+                "used": true
+              },
+              {
+                "id": "m_mtmqr7vbyjfv91",
+                "kind": "episode",
+                "text": "The user dictated a standing preference for standup updates to Slack.",
+                "score": 0.6768,
+                "vec": 0.6999,
+                "bm25": 18.257,
+                "used": true
+              },
+              {
+                "id": "m_mtms3rplwgusjc",
+                "kind": "episode",
+                "text": "The user sent a Slack message giving a standup update on wireframes and drop-off numbers for the sprint review.",
+                "score": 0.6638,
+                "vec": 0.2912,
+                "bm25": 7.096,
+                "used": true
+              }
+            ]
+          }
+        ]
+      },
+      "metrics": {
+        "total_ms": 10507,
+        "retrieval_ms": 721,
+        "model_ms": 9785,
+        "input_tokens": 5002,
+        "output_tokens": 95,
+        "cost_usd": 0.0005382
+      }
+    },
+    {
+      "id": "signoff-preference",
+      "group": "preference",
+      "question": "How should I sign off external emails?",
+      "why_this_case_exists": null,
+      "expected": {
+        "outcome": "answered",
+        "any_of": [
+          "best, ananya",
+          "best,"
+        ],
+        "cite_planted": "pref_signoff"
+      },
+      "passed": true,
+      "failures": [],
+      "error": null,
+      "outcome": "answered",
+      "confidence": "high",
+      "answer": "You dictated that when writing to external partners like HDFC or Truvia, your sign-off should always be \"Best, Ananya\" and you should never use \"Regards\" or \"Warm regards\" (memory id: m_mtmrckkd6dmj9w).",
+      "draft": null,
+      "citations": {
+        "memories": [
+          {
+            "id": "m_mtmrckkd6dmj9w",
+            "kind": "preference",
+            "statement": "The user prefers to use 'Best' as the email sign-off when writing to external partners like HDFC or Truvia, and refuses to use 'Regards' or 'Warm regards'.",
+            "confidence": 0.95,
+            "support_count": 1,
+            "source": "inferred",
+            "provenance": [
+              "d_00192"
+            ]
+          }
+        ],
+        "dictations": []
+      },
+      "reasoning_trace": {
+        "rounds": 2,
+        "notes": [],
+        "steps": [
+          {
+            "tool": "recall",
+            "args": {
+              "query": "sign off external emails"
+            },
+            "ms": 648,
+            "summary": "10 of 10 candidate memories passed the relevance floor (0.3)",
+            "candidates": [
+              {
+                "id": "m_mtmrckkd6dmj9w",
+                "kind": "preference",
+                "text": "The user prefers to use 'Best' as the email sign-off when writing to external partners like HDFC or Truvia, and refuses to use 'Regards' or 'Warm regards'.",
+                "score": 0.8601,
+                "vec": 0.3049,
+                "bm25": 14.369,
+                "used": true
+              },
+              {
+                "id": "m_mtmtkvbtxsq41d",
+                "kind": "preference",
+                "text": "Wants all merchant emails reviewed by Farah before they go out.",
+                "score": 0.7214,
+                "vec": 0.6348,
+                "bm25": 2.636,
+                "used": true
+              },
+              {
+                "id": "m_mtmrckjslzj3rx",
+                "kind": "episode",
+                "text": "The user dictated a note-to-self email preference regarding sign-offs for external partners.",
+                "score": 0.6943,
+                "vec": 0.329,
+                "bm25": 17.157,
+                "used": true
+              },
+              {
+                "id": "m_mtmsp5xlfm4q8s",
+                "kind": "episode",
+                "text": "The user dictated a support email to the Truvia support team regarding a spike in webhook timeouts.",
+                "score": 0.6451,
+                "vec": 0.1157,
+                "bm25": 2.659,
+                "used": true
+              },
+              {
+                "id": "m_mtmqz055o2zqhu",
+                "kind": "episode",
+                "text": "The user sent an email update stating they cleared the primary audit with HDFC and are waiting for legal sign-off.",
+                "score": 0.6249,
+                "vec": 0.1085,
+                "bm25": 8.039,
+                "used": true
+              },
+              {
+                "id": "m_mtms0k1cxepgk3",
+                "kind": "episode",
+                "text": "The user dictated a Gmail email sharing weekly metrics review notes about a drop in drop-offs during the KYC step.",
+                "score": 0.622,
+                "vec": 0.1131,
+                "bm25": 4.068,
+                "used": true
+              },
+              {
+                "id": "m_mtmsa1yuetkpd8",
+                "kind": "episode",
+                "text": "The user wrote an email to Devika providing design review feedback on merchant drop-off warning banners.",
+                "score": 0.6144,
+                "vec": 0.0873,
+                "bm25": 4.133,
+                "used": true
+              },
+              {
+                "id": "m_mtms5ikw9qkjar",
+                "kind": "episode",
+                "text": "The user dictated an email to Farah requesting a funnel breakdown for HDFC bank drop-offs.",
+                "score": 0.6091,
+                "vec": 0.0835,
+                "bm25": 4.667,
+                "used": true
+              }
+            ]
+          }
+        ]
+      },
+      "metrics": {
+        "total_ms": 9659,
+        "retrieval_ms": 648,
+        "model_ms": 9009,
+        "input_tokens": 4869,
+        "output_tokens": 117,
+        "cost_usd": 0.0005337
+      }
+    },
+    {
+      "id": "banned-words",
+      "group": "preference",
+      "question": "Are there any words I have said I do not want used with merchants?",
+      "why_this_case_exists": null,
+      "expected": {
+        "outcome": "answered",
+        "any_of": [
+          "synergy",
+          "leverage",
+          "circle back"
+        ],
+        "cite_planted": "pref_no_jargon"
+      },
+      "passed": true,
+      "failures": [],
+      "error": null,
+      "outcome": "answered",
+      "confidence": "high",
+      "answer": "Yes, you dictated that you never want the words synergy, leverage, or circle back used in anything that goes out to merchants, preferring plain words only (memory m_mtmqz7qrvtq2k9, dictation d_00132).",
+      "draft": null,
+      "citations": {
+        "memories": [
+          {
+            "id": "m_mtmqz7qrvtq2k9",
+            "kind": "preference",
+            "statement": "The user requires that the words synergy, leverage, or circle back never be used in anything going out to merchants.",
+            "confidence": 0.95,
+            "support_count": 1,
+            "source": "inferred",
+            "provenance": [
+              "d_00132"
+            ]
+          }
+        ],
+        "dictations": [
+          {
+            "id": "d_00132",
+            "spoken_at": "2026-06-04T15:15:00.000Z",
+            "app": "slack",
+            "formatted": "Hey team, basically I just want to say that I never want the words synergy, leverage, or circle back used in anything that goes out to our merchants. Plain words only, please."
+          }
+        ]
+      },
+      "reasoning_trace": {
+        "rounds": 2,
+        "notes": [],
+        "steps": [
+          {
+            "tool": "recall",
+            "args": {
+              "query": "merchants words not to use"
+            },
+            "ms": 641,
+            "summary": "10 of 10 candidate memories passed the relevance floor (0.3)",
+            "candidates": [
+              {
+                "id": "m_mtmqz7qrvtq2k9",
+                "kind": "preference",
+                "text": "The user requires that the words synergy, leverage, or circle back never be used in anything going out to merchants.",
+                "score": 0.8671,
+                "vec": 0.3158,
+                "bm25": 11.249,
+                "used": true
+              },
+              {
+                "id": "m_mtmrflm4nhemr3",
+                "kind": "fact",
+                "text": "The agro merchant processes around 50 lakh monthly.",
+                "score": 0.7607,
+                "vec": 0.2909,
+                "bm25": 0.905,
+                "used": true
+              },
+              {
+                "id": "m_mtmqzi667eq65e",
+                "kind": "fact",
+                "text": "The user's business crossed fifty thousand active merchants.",
+                "score": 0.7546,
+                "vec": 0.3568,
+                "bm25": 0.882,
+                "used": true
+              },
+              {
+                "id": "m_mtmqtf46novdox",
+                "kind": "fact",
+                "text": "The user is part of the merchant growth squad.",
+                "score": 0.7276,
+                "vec": 0.2779,
+                "bm25": 0.835,
+                "used": true
+              },
+              {
+                "id": "m_mtmsijc3v4jnts",
+                "kind": "fact",
+                "text": "Over 12,000 merchants were onboarded during the week of August 15, 2026.",
+                "score": 0.708,
+                "vec": 0.2643,
+                "bm25": 0.829,
+                "used": true
+              },
+              {
+                "id": "m_mtms5b4x5z0gpj",
+                "kind": "fact",
+                "text": "Rahul Iyer and Farah Sheikh are working on merchant analytics together.",
+                "score": 0.7077,
+                "vec": 0.2576,
+                "bm25": 0.86,
+                "used": true
+              },
+              {
+                "id": "m_mtms4zea7jtdup",
+                "kind": "episode",
+                "text": "The user dictated a Gmail standup update reporting that merchant onboarding hit 10,000 merchants.",
+                "score": 0.6211,
+                "vec": 0.2696,
+                "bm25": 0.899,
+                "used": true
+              },
+              {
+                "id": "m_mtmqift04mk21j",
+                "kind": "fact",
+                "text": "Merchant ID 5492 is experiencing errors on KYC API calls.",
+                "score": 0.6075,
+                "vec": 0.2476,
+                "bm25": 0.766,
+                "used": true
+              }
+            ]
+          }
+        ]
+      },
+      "metrics": {
+        "total_ms": 6786,
+        "retrieval_ms": 641,
+        "model_ms": 6142,
+        "input_tokens": 4725,
+        "output_tokens": 135,
+        "cost_usd": 0.0005265000000000001
+      }
+    },
+    {
+      "id": "polish-yesterday-slack",
+      "group": "flagship",
+      "question": "Find the Slack update I dictated around 5pm yesterday and polish it into a standup update for the meeting I am walking into.",
+      "why_this_case_exists": "The assignment's own example. It needs episodic retrieval by time and app, the source text, and the person's stored preferences at once.",
+      "expected": {
+        "outcome": [
+          "acted",
+          "answered"
+        ],
+        "any_of": [
+          "hdfc",
+          "ledger",
+          "devika"
+        ],
+        "cite_planted": "yesterday_5pm_slack"
+      },
+      "passed": false,
+      "failures": [
+        "outcome was \"abstained\", expected acted or answered",
+        "answer contained none of: hdfc | ledger | devika",
+        "did not cite the source dictation for \"yesterday_5pm_slack\" (d_00499)",
+        "expected a draft, got none"
+      ],
+      "error": null,
+      "outcome": "abstained",
+      "confidence": "medium",
+      "answer": "You did not dictate any Slack update around 5pm yesterday (September 3rd, 2026). I searched your dictation history for that timeframe and found no matching dictations.",
+      "draft": null,
+      "citations": {
+        "memories": [],
+        "dictations": []
+      },
+      "reasoning_trace": {
+        "rounds": 5,
+        "notes": [],
+        "steps": [
+          {
+            "tool": "find_dictations",
+            "args": {
+              "since": "2026-09-03T00:00:00Z",
+              "app": "slack",
+              "until": "2026-09-03T23:59:59Z"
+            },
+            "ms": 1,
+            "summary": "0 dictations matched (8 personal dictations are excluded from every search)",
+            "candidates": []
+          },
+          {
+            "tool": "recall",
+            "args": {
+              "query": "standup update slack"
+            },
+            "ms": 583,
+            "summary": "10 of 10 candidate memories passed the relevance floor (0.3)",
+            "candidates": [
+              {
+                "id": "m_mtmqr7vcprna87",
+                "kind": "preference",
+                "text": "The user prefers standup updates to be written as three short bullets with no paragraphs and no greeting.",
+                "score": 0.8395,
+                "vec": 0.3768,
+                "bm25": 7.299,
+                "used": true
+              },
+              {
+                "id": "m_mtmsj4s4vvg1t4",
+                "kind": "episode",
+                "text": "The user dictated a Slack message reminding the team about standup update formatting.",
+                "score": 0.7892,
+                "vec": 0.5021,
+                "bm25": 10.368,
+                "used": true
+              },
+              {
+                "id": "m_mtmsb0wklw9mnl",
+                "kind": "episode",
+                "text": "The user dictated a standup update for Slack stating that the merchant onboarding flow is eighty percent done, Devika is finishing screens, and Rahul is testing APIs.",
+                "score": 0.7147,
+                "vec": 0.394,
+                "bm25": 8.402,
+                "used": true
+              },
+              {
+                "id": "m_mtmsi4crf6wpwe",
+                "kind": "episode",
+                "text": "The user dictated a standup update in Linear regarding merchant onboarding progress and metrics.",
+                "score": 0.7147,
+                "vec": 0.3927,
+                "bm25": 7.674,
+                "used": true
+              },
+              {
+                "id": "m_mtms4zefwhos7d",
+                "kind": "episode",
+                "text": "The user sent a standup update on Slack regarding merchant onboarding progress.",
+                "score": 0.7088,
+                "vec": 0.4567,
+                "bm25": 9.693,
+                "used": true
+              },
+              {
+                "id": "m_mtms3rplwgusjc",
+                "kind": "episode",
+                "text": "The user sent a Slack message giving a standup update on wireframes and drop-off numbers for the sprint review.",
+                "score": 0.7041,
+                "vec": 0.5133,
+                "bm25": 9.112,
+                "used": true
+              },
+              {
+                "id": "m_mtmspsq8y1jwlq",
+                "kind": "episode",
+                "text": "The user dictated a standup update for Linear about merchant onboarding numbers for Kavach Pay.",
+                "score": 0.6974,
+                "vec": 0.2077,
+                "bm25": 6.324,
+                "used": true
+              },
+              {
+                "id": "m_mtmqr7vbyjfv91",
+                "kind": "episode",
+                "text": "The user dictated a standing preference for standup updates to Slack.",
+                "score": 0.6768,
+                "vec": 0.5337,
+                "bm25": 10.514,
+                "used": true
+              }
+            ]
+          },
+          {
+            "tool": "find_dictations",
+            "args": {
+              "since": "2026-09-03T16:00:00Z",
+              "until": "2026-09-03T18:00:00Z"
+            },
+            "ms": 1,
+            "summary": "0 dictations matched (8 personal dictations are excluded from every search)",
+            "candidates": []
+          },
+          {
+            "tool": "find_dictations",
+            "args": {
+              "until": "2026-09-03T23:59:59Z",
+              "since": "2026-09-03T00:00:00Z"
+            },
+            "ms": 0,
+            "summary": "0 dictations matched (8 personal dictations are excluded from every search)",
+            "candidates": []
+          },
+          {
+            "tool": "recall",
+            "args": {
+              "query": "yesterday update"
+            },
+            "ms": 579,
+            "summary": "10 of 10 candidate memories passed the relevance floor (0.3)",
+            "candidates": [
+              {
+                "id": "m_mtmqr7vcprna87",
+                "kind": "preference",
+                "text": "The user prefers standup updates to be written as three short bullets with no paragraphs and no greeting.",
+                "score": 0.7891,
+                "vec": 0.1197,
+                "bm25": 2.74,
+                "used": true
+              },
+              {
+                "id": "m_mtmsj4s4vvg1t4",
+                "kind": "episode",
+                "text": "The user dictated a Slack message reminding the team about standup update formatting.",
+                "score": 0.7837,
+                "vec": 0.2188,
+                "bm25": 2.853,
+                "used": true
+              },
+              {
+                "id": "m_mtmsq8g5ds29tu",
+                "kind": "episode",
+                "text": "The user dictated a status update message for Slack regarding V2 project milestones and risks.",
+                "score": 0.7421,
+                "vec": 0.1858,
+                "bm25": 2.635,
+                "used": true
+              },
+              {
+                "id": "m_mtmsi4crf6wpwe",
+                "kind": "episode",
+                "text": "The user dictated a standup update in Linear regarding merchant onboarding progress and metrics.",
+                "score": 0.7124,
+                "vec": 0.1395,
+                "bm25": 2.881,
+                "used": true
+              },
+              {
+                "id": "m_mtmspo3ziiklwf",
+                "kind": "episode",
+                "text": "The user dictated an incident review update about a Truvia KYC check failure resolved by Rahul Iyer.",
+                "score": 0.6972,
+                "vec": 0.169,
+                "bm25": 2.57,
+                "used": true
+              },
+              {
+                "id": "m_mtms3rpjkllgfu",
+                "kind": "episode",
+                "text": "The user sent a Slack message updating on the HDFC call and sandbox API timeline.",
+                "score": 0.6683,
+                "vec": 0.2164,
+                "bm25": 2.74,
+                "used": true
+              },
+              {
+                "id": "m_mtmspsq5moofps",
+                "kind": "episode",
+                "text": "The user posted a status update on Slack about merchant onboarding, noting Rahul's and Devika's progress.",
+                "score": 0.6676,
+                "vec": 0.1298,
+                "bm25": 2.602,
+                "used": true
+              },
+              {
+                "id": "m_mtmqr7vbyjfv91",
+                "kind": "episode",
+                "text": "The user dictated a standing preference for standup updates to Slack.",
+                "score": 0.6606,
+                "vec": 0.2182,
+                "bm25": 2.893,
+                "used": true
+              }
+            ]
+          }
+        ]
+      },
+      "metrics": {
+        "total_ms": 14118,
+        "retrieval_ms": 1164,
+        "model_ms": 12953,
+        "input_tokens": 18600,
+        "output_tokens": 282,
+        "cost_usd": 0.0019728000000000002
+      }
+    },
+    {
+      "id": "truvia-thread",
+      "group": "aggregation",
+      "question": "What happened with the Truvia KYC timeouts in the end?",
+      "why_this_case_exists": "The story is spread across three dictations in three apps over three weeks.",
+      "expected": {
+        "outcome": "answered",
+        "any_of": [
+          "pan",
+          "endpoint",
+          "under one percent",
+          "1%",
+          "one percent"
+        ],
+        "cite_planted": "truvia_resolution"
+      },
+      "passed": false,
+      "failures": [
+        "answer contained none of: pan | endpoint | under one percent | 1% | one percent",
+        "did not cite the source dictation for \"truvia_resolution\" (d_00268)"
+      ],
+      "error": null,
+      "outcome": "answered",
+      "confidence": "high",
+      "answer": "After a spike in failures on the Truvia KYC check due to timeouts, Rahul debugged the issue, you increased the limit, and everything has been stable since (d_00484, m_mtmspo3ziiklwf).",
+      "draft": null,
+      "citations": {
+        "memories": [
+          {
+            "id": "m_mtmspo3ziiklwf",
+            "kind": "episode",
+            "statement": "The user dictated an incident review update about a Truvia KYC check failure resolved by Rahul Iyer.",
+            "confidence": 0.95,
+            "support_count": 1,
+            "source": "inferred",
+            "provenance": [
+              "d_00484"
+            ]
+          }
+        ],
+        "dictations": [
+          {
+            "id": "d_00484",
+            "spoken_at": "2026-08-28T12:13:00.000Z",
+            "app": "docs",
+            "formatted": "Incident Review Update: Basically, we saw a spike in failures on the Truvia KYC check yesterday afternoon. Rahul debugged it and found a timeout issue, so we increased the limit and everything has been stable since."
+          }
+        ]
+      },
+      "reasoning_trace": {
+        "rounds": 4,
+        "notes": [],
+        "steps": [
+          {
+            "tool": "find_dictations",
+            "args": {
+              "query": "Truvia KYC timeouts"
+            },
+            "ms": 35,
+            "summary": "8 dictations matched (8 personal dictations are excluded from every search)",
+            "candidates": [
+              {
+                "id": "d_00312",
+                "text": "Hi support team at Truvia, we noticed that the KYC check for merchant ID 982 has failed with a timeout error. Can you check the logs, please",
+                "score": 0.9761,
+                "vec": 0.3198,
+                "bm25": 6.138,
+                "used": true
+              },
+              {
+                "id": "d_00476",
+                "text": "Dear Truvia support team, we noticed a spike in webhook timeouts for merchant verification checks on 24th August. Please investigate.",
+                "score": 0.9387,
+                "vec": 0.2635,
+                "bm25": 5.59,
+                "used": true
+              },
+              {
+                "id": "d_00203",
+                "text": "Hey team, so Farah checked the logs and basically the Truvia timeouts are coming from their PAN verification endpoint and not our side. So R",
+                "score": 0.9357,
+                "vec": 0.3413,
+                "bm25": 5.306,
+                "used": true
+              },
+              {
+                "id": "d_00106",
+                "text": "Linear ticket: Flaky integration test on Truvia KYC webhook. Basically, the test fails randomly in the pipeline because of timeout issues. R",
+                "score": 0.9251,
+                "vec": 0.2233,
+                "bm25": 5.748,
+                "used": true
+              },
+              {
+                "id": "d_00030",
+                "text": "Fix flaky integration test in merchant onboarding pipeline where Truvia API timeout causes false negative on KYC status check.",
+                "score": 0.9236,
+                "vec": 0.2063,
+                "bm25": 6.714,
+                "used": true
+              },
+              {
+                "id": "d_00358",
+                "text": "Linear issue for testing: the KYC verification test with Truvia keeps failing intermittently because of timeout issues on their sandbox envi",
+                "score": 0.9215,
+                "vec": 0.2081,
+                "bm25": 6.699,
+                "used": true
+              },
+              {
+                "id": "d_00168",
+                "text": "Hi Farah, could you please pull a funnel breakdown for merchant drop-offs at the KYC step this week? I want to see if the Truvia timeouts ar",
+                "score": 0.9173,
+                "vec": 0.2463,
+                "bm25": 5.466,
+                "used": true
+              },
+              {
+                "id": "d_00408",
+                "text": "Check with Truvia support: check number 5490 failed because of a timeout on their end. We need them to rerun it manually for this merchant w",
+                "score": 0.9077,
+                "vec": 0.2753,
+                "bm25": 4.705,
+                "used": true
+              }
+            ]
+          },
+          {
+            "tool": "recall",
+            "args": {
+              "query": "Truvia KYC timeouts"
+            },
+            "ms": 657,
+            "summary": "10 of 10 candidate memories passed the relevance floor (0.3)",
+            "candidates": [
+              {
+                "id": "m_mtmsc0n48o26qr",
+                "kind": "fact",
+                "text": "Check number 5490 failed because of a timeout on Truvia's end.",
+                "score": 0.8402,
+                "vec": 0.3826,
+                "bm25": 5.9,
+                "used": true
+              },
+              {
+                "id": "m_mtmr2js6xekmih",
+                "kind": "fact",
+                "text": "The sandbox environment tests fail randomly due to timeout issues with Truvia API calls.",
+                "score": 0.8081,
+                "vec": 0.3212,
+                "bm25": 5.561,
+                "used": true
+              },
+              {
+                "id": "m_mtmsp5xlfm4q8s",
+                "kind": "episode",
+                "text": "The user dictated a support email to the Truvia support team regarding a spike in webhook timeouts.",
+                "score": 0.7384,
+                "vec": 0.3058,
+                "bm25": 4.876,
+                "used": true
+              },
+              {
+                "id": "m_mtmspo3ziiklwf",
+                "kind": "episode",
+                "text": "The user dictated an incident review update about a Truvia KYC check failure resolved by Rahul Iyer.",
+                "score": 0.7248,
+                "vec": 0.2647,
+                "bm25": 5.221,
+                "used": true
+              },
+              {
+                "id": "m_mtmqqq3gmyvt99",
+                "kind": "fact",
+                "text": "The user relies on Truvia for document and partner verifications, including merchant documents in KYC approvals.",
+                "score": 0.7133,
+                "vec": 0.225,
+                "bm25": 3.7,
+                "used": true
+              },
+              {
+                "id": "m_mtmsa1ybymr18n",
+                "kind": "episode",
+                "text": "The user drafted a support message to Truvia regarding a failed KYC check and API timeout for a specific merchant.",
+                "score": 0.7015,
+                "vec": 0.2774,
+                "bm25": 6.445,
+                "used": true
+              },
+              {
+                "id": "m_mtmrula18nwfyf",
+                "kind": "fact",
+                "text": "HDFC is facing timeouts on the callback URL between 12 and 1 PM.",
+                "score": 0.6969,
+                "vec": 0.2836,
+                "bm25": 3.848,
+                "used": true
+              },
+              {
+                "id": "m_mtmr63h3738p5p",
+                "kind": "episode",
+                "text": "The user created a Linear ticket about Truvia KYC check timeouts for merchants in Tamil Nadu.",
+                "score": 0.6895,
+                "vec": 0.5101,
+                "bm25": 7.418,
+                "used": true
+              }
+            ]
+          },
+          {
+            "tool": "open_dictation",
+            "args": {
+              "dictation_id": "d_00484"
+            },
+            "ms": 0,
+            "summary": "opened d_00484 (docs, 2026-08-28T12:13)",
+            "candidates": []
+          }
+        ]
+      },
+      "metrics": {
+        "total_ms": 13718,
+        "retrieval_ms": 692,
+        "model_ms": 13022,
+        "input_tokens": 12881,
+        "output_tokens": 172,
+        "cost_usd": 0.0013568999999999999
+      }
+    },
+    {
+      "id": "truvia-cause",
+      "group": "aggregation",
+      "question": "Whose side was the Truvia failure on, ours or theirs?",
+      "why_this_case_exists": null,
+      "expected": {
+        "outcome": "answered",
+        "any_of": [
+          "their",
+          "truvia",
+          "not our",
+          "pan verification"
+        ],
+        "cite_planted": null
+      },
+      "passed": true,
+      "failures": [],
+      "error": null,
+      "outcome": "answered",
+      "confidence": "high",
+      "answer": "You dictated that the Truvia KYC check failure was on our side due to a timeout issue, which Rahul resolved by increasing the limit (m_mtmspo3ziiklwf, d_00484).",
+      "draft": null,
+      "citations": {
+        "memories": [
+          {
+            "id": "m_mtmspo3ziiklwf",
+            "kind": "episode",
+            "statement": "The user dictated an incident review update about a Truvia KYC check failure resolved by Rahul Iyer.",
+            "confidence": 0.95,
+            "support_count": 1,
+            "source": "inferred",
+            "provenance": [
+              "d_00484"
+            ]
+          }
+        ],
+        "dictations": [
+          {
+            "id": "d_00484",
+            "spoken_at": "2026-08-28T12:13:00.000Z",
+            "app": "docs",
+            "formatted": "Incident Review Update: Basically, we saw a spike in failures on the Truvia KYC check yesterday afternoon. Rahul debugged it and found a timeout issue, so we increased the limit and everything has been stable since."
+          }
+        ]
+      },
+      "reasoning_trace": {
+        "rounds": 3,
+        "notes": [],
+        "steps": [
+          {
+            "tool": "recall",
+            "args": {
+              "query": "Truvia failure"
+            },
+            "ms": 655,
+            "summary": "10 of 10 candidate memories passed the relevance floor (0.3)",
+            "candidates": [
+              {
+                "id": "m_mtmspo3ziiklwf",
+                "kind": "episode",
+                "text": "The user dictated an incident review update about a Truvia KYC check failure resolved by Rahul Iyer.",
+                "score": 0.8227,
+                "vec": 0.3414,
+                "bm25": 5.635,
+                "used": true
+              },
+              {
+                "id": "m_mtmslvu7v03n0q",
+                "kind": "episode",
+                "text": "The user dictated a support email to Truvia regarding a KYC failure for merchant ID 98502.",
+                "score": 0.8167,
+                "vec": 0.3579,
+                "bm25": 6.265,
+                "used": true
+              },
+              {
+                "id": "m_mtmqse4lx3l1of",
+                "kind": "fact",
+                "text": "The compliance review for the Truvia integration terms is completed and signed off by legal.",
+                "score": 0.7499,
+                "vec": 0.2975,
+                "bm25": 2.042,
+                "used": true
+              },
+              {
+                "id": "m_mtmsc0n48o26qr",
+                "kind": "fact",
+                "text": "Check number 5490 failed because of a timeout on Truvia's end.",
+                "score": 0.7252,
+                "vec": 0.2876,
+                "bm25": 1.992,
+                "used": true
+              },
+              {
+                "id": "m_mtmqkzladaputj",
+                "kind": "fact",
+                "text": "The merchant onboarding pipeline integrates with the Truvia API.",
+                "score": 0.7243,
+                "vec": 0.2867,
+                "bm25": 2.051,
+                "used": true
+              },
+              {
+                "id": "m_mtmrst098677v2",
+                "kind": "fact",
+                "text": "Truvia successfully moved PAN verification to the new endpoint.",
+                "score": 0.7108,
+                "vec": 0.268,
+                "bm25": 2.082,
+                "used": true
+              },
+              {
+                "id": "m_mtmr2js6xekmih",
+                "kind": "fact",
+                "text": "The sandbox environment tests fail randomly due to timeout issues with Truvia API calls.",
+                "score": 0.6938,
+                "vec": 0.2913,
+                "bm25": 1.884,
+                "used": true
+              },
+              {
+                "id": "m_mtmsciivieod47",
+                "kind": "fact",
+                "text": "Rahul finished the Truvia integration bits.",
+                "score": 0.6914,
+                "vec": 0.2513,
+                "bm25": 2.13,
+                "used": true
+              }
+            ]
+          },
+          {
+            "tool": "open_dictation",
+            "args": {
+              "dictation_id": "d_00484"
+            },
+            "ms": 1,
+            "summary": "opened d_00484 (docs, 2026-08-28T12:13)",
+            "candidates": []
+          }
+        ]
+      },
+      "metrics": {
+        "total_ms": 10717,
+        "retrieval_ms": 655,
+        "model_ms": 10060,
+        "input_tokens": 8256,
+        "output_tokens": 145,
+        "cost_usd": 0.0008836
+      }
+    },
+    {
+      "id": "ledger-owner",
+      "group": "fact",
+      "question": "Who owns the ledger migration?",
+      "why_this_case_exists": null,
+      "expected": {
+        "outcome": "answered",
+        "any_of": [
+          "rahul"
+        ],
+        "cite_planted": "rahul_owns_migration"
+      },
+      "passed": true,
+      "failures": [],
+      "error": null,
+      "outcome": "answered",
+      "confidence": "high",
+      "answer": "Rahul owns the ledger migration.",
+      "draft": null,
+      "citations": {
+        "memories": [
+          {
+            "id": "m_mtmrw5rjvdlt9b",
+            "kind": "fact",
+            "statement": "Rahul owns the ledger migration.",
+            "confidence": 0.9,
+            "support_count": 1,
+            "source": "inferred",
+            "provenance": [
+              "d_00284"
+            ]
+          }
+        ],
+        "dictations": [
+          {
+            "id": "d_00284",
+            "spoken_at": "2026-07-07T10:07:00.000Z",
+            "app": "slack",
+            "formatted": "Hey Rahul, just confirming you own the ledger migration, right? It has to be done before the December launch."
+          }
+        ]
+      },
+      "reasoning_trace": {
+        "rounds": 3,
+        "notes": [],
+        "steps": [
+          {
+            "tool": "recall",
+            "args": {
+              "query": "ledger migration owner"
+            },
+            "ms": 511,
+            "summary": "10 of 10 candidate memories passed the relevance floor (0.3)",
+            "candidates": [
+              {
+                "id": "m_mtmqursdneguul",
+                "kind": "fact",
+                "text": "Rahul and Devika are working on the HDFC migration.",
+                "score": 0.8663,
+                "vec": 0.4563,
+                "bm25": 6.029,
+                "used": true
+              },
+              {
+                "id": "m_mtmrw8h2e7szn1",
+                "kind": "fact",
+                "text": "The ledger migration has to be done before the December launch.",
+                "score": 0.8539,
+                "vec": 0.6547,
+                "bm25": 13.741,
+                "used": true
+              },
+              {
+                "id": "m_mtmrw5rjvdlt9b",
+                "kind": "fact",
+                "text": "Rahul owns the ledger migration.",
+                "score": 0.8472,
+                "vec": 0.5337,
+                "bm25": 14.077,
+                "used": true
+              },
+              {
+                "id": "m_mtmr9tymurutfp",
+                "kind": "fact",
+                "text": "HDFC is migrating their API gateway on Wednesday, June 24, 2026.",
+                "score": 0.7625,
+                "vec": 0.1661,
+                "bm25": 5.664,
+                "used": true
+              },
+              {
+                "id": "m_mtmrw2to4wualx",
+                "kind": "episode",
+                "text": "The user sent a slack message to Rahul confirming ownership of the ledger migration before the December launch.",
+                "score": 0.6974,
+                "vec": 0.5959,
+                "bm25": 12.657,
+                "used": true
+              },
+              {
+                "id": "m_mtmrr0gbi8xv72",
+                "kind": "preference",
+                "text": "The user prefers meeting notes to start with decisions taken, followed by owners, with open questions at the bottom.",
+                "score": 0.659,
+                "vec": 0.0946,
+                "bm25": 6.2,
+                "used": true
+              },
+              {
+                "id": "m_mtmrsbu07pfqoi",
+                "kind": "episode",
+                "text": "The user sent an email to the Truvia team confirming successful migration of PAN verification and low failure rates.",
+                "score": 0.6515,
+                "vec": 0.2925,
+                "bm25": 4.993,
+                "used": true
+              },
+              {
+                "id": "m_mtmr8vdisyj43t",
+                "kind": "episode",
+                "text": "The user recorded meeting notes from an HDFC call about an upcoming API gateway migration causing staging downtime next Wednesday.",
+                "score": 0.6257,
+                "vec": 0.2628,
+                "bm25": 4.816,
+                "used": true
+              }
+            ]
+          },
+          {
+            "tool": "open_dictation",
+            "args": {
+              "dictation_id": "d_00284"
+            },
+            "ms": 1,
+            "summary": "opened d_00284 (slack, 2026-07-07T10:07)",
+            "candidates": []
+          }
+        ]
+      },
+      "metrics": {
+        "total_ms": 25140,
+        "retrieval_ms": 511,
+        "model_ms": 24627,
+        "input_tokens": 8364,
+        "output_tokens": 106,
+        "cost_usd": 0.0008788
+      }
+    },
+    {
+      "id": "devika-screens",
+      "group": "fact",
+      "question": "What did I assign Devika, and when is it due?",
+      "why_this_case_exists": null,
+      "expected": {
+        "outcome": "answered",
+        "any_of": [
+          "onboarding",
+          "screens"
+        ],
+        "cite_planted": "devika_onboarding_screens"
+      },
+      "passed": true,
+      "failures": [],
+      "error": null,
+      "outcome": "answered",
+      "confidence": "high",
+      "answer": "You dictated a Linear ticket assigning Devika the redesign of the three merchant onboarding screens, with a target date of August 20th.",
+      "draft": null,
+      "citations": {
+        "memories": [
+          {
+            "id": "m_mtmrzjuv14er5x",
+            "kind": "fact",
+            "statement": "Devika is assigned the redesign of the three merchant onboarding screens with a target date of August 20th.",
+            "confidence": 0.95,
+            "support_count": 1,
+            "source": "inferred",
+            "provenance": [
+              "d_00301"
+            ]
+          }
+        ],
+        "dictations": [
+          {
+            "id": "d_00301",
+            "spoken_at": "2026-07-12T13:33:00.000Z",
+            "app": "linear",
+            "formatted": "Devika, please take up the redesign of the three merchant onboarding screens. Target date is 20th of August. Make sure it matches the new Kavach design system guidelines."
+          }
+        ]
+      },
+      "reasoning_trace": {
+        "rounds": 4,
+        "notes": [],
+        "steps": [
+          {
+            "tool": "recall",
+            "args": {
+              "query": "Devika assigned due date"
+            },
+            "ms": 635,
+            "summary": "10 of 10 candidate memories passed the relevance floor (0.3)",
+            "candidates": [
+              {
+                "id": "m_mtmrzjuv14er5x",
+                "kind": "fact",
+                "text": "Devika is assigned the redesign of the three merchant onboarding screens with a target date of August 20th.",
+                "score": 0.8742,
+                "vec": 0.4685,
+                "bm25": 11.9,
+                "used": true
+              },
+              {
+                "id": "m_mtmqipv8kbsbrg",
+                "kind": "fact",
+                "text": "Devika is assigned to fix the mobile web UI bug where the GST certificate upload button gets cut off on iPhone SE screen size.",
+                "score": 0.8205,
+                "vec": 0.3473,
+                "bm25": 5.751,
+                "used": true
+              },
+              {
+                "id": "m_mtms9b3bqelofd",
+                "kind": "fact",
+                "text": "Rahul is assigned to the HDFC integration tasks.",
+                "score": 0.8023,
+                "vec": 0.2933,
+                "bm25": 5.233,
+                "used": true
+              },
+              {
+                "id": "m_mtmsis77qnlq17",
+                "kind": "fact",
+                "text": "Rahul is assigned to fix a flaky test in the merchant onboarding service.",
+                "score": 0.7047,
+                "vec": 0.2303,
+                "bm25": 4.745,
+                "used": true
+              },
+              {
+                "id": "m_mtmsoppz7g99y7",
+                "kind": "fact",
+                "text": "Devika leads a design team.",
+                "score": 0.682,
+                "vec": 0.3697,
+                "bm25": 2.474,
+                "used": true
+              },
+              {
+                "id": "m_mtmqomau4vgo9l",
+                "kind": "fact",
+                "text": "Devika handles design reviews for the mobile signup flow.",
+                "score": 0.6736,
+                "vec": 0.3821,
+                "bm25": 2.291,
+                "used": true
+              },
+              {
+                "id": "m_mtmskaogbkhkek",
+                "kind": "fact",
+                "text": "Devika is the lead product designer for Kavach Pay and is driving the merchant onboarding redesign.",
+                "score": 0.6727,
+                "vec": 0.343,
+                "bm25": 2.021,
+                "used": true
+              },
+              {
+                "id": "m_mtmspj93x9vxdp",
+                "kind": "fact",
+                "text": "The user works with Devika on KYC flows.",
+                "score": 0.6604,
+                "vec": 0.3246,
+                "bm25": 2.435,
+                "used": true
+              }
+            ]
+          },
+          {
+            "tool": "recall",
+            "args": {
+              "query": "Devika task assigned due date August September"
+            },
+            "ms": 599,
+            "summary": "10 of 10 candidate memories passed the relevance floor (0.3)",
+            "candidates": [
+              {
+                "id": "m_mtmrzjuv14er5x",
+                "kind": "fact",
+                "text": "Devika is assigned the redesign of the three merchant onboarding screens with a target date of August 20th.",
+                "score": 0.8742,
+                "vec": 0.4219,
+                "bm25": 17.413,
+                "used": true
+              },
+              {
+                "id": "m_mtms9b3bqelofd",
+                "kind": "fact",
+                "text": "Rahul is assigned to the HDFC integration tasks.",
+                "score": 0.8402,
+                "vec": 0.2627,
+                "bm25": 10.81,
+                "used": true
+              },
+              {
+                "id": "m_mtmqipv8kbsbrg",
+                "kind": "fact",
+                "text": "Devika is assigned to fix the mobile web UI bug where the GST certificate upload button gets cut off on iPhone SE screen size.",
+                "score": 0.7908,
+                "vec": 0.2744,
+                "bm25": 5.751,
+                "used": true
+              },
+              {
+                "id": "m_mtmsis77qnlq17",
+                "kind": "fact",
+                "text": "Rahul is assigned to fix a flaky test in the merchant onboarding service.",
+                "score": 0.7458,
+                "vec": 0.1977,
+                "bm25": 4.745,
+                "used": true
+              },
+              {
+                "id": "m_mtmrwhk7z14uoe",
+                "kind": "episode",
+                "text": "The user dictated a Linear ticket assigning Devika the redesign of three merchant onboarding screens by August 20th following the Kavatch design system guidelines.",
+                "score": 0.6779,
+                "vec": 0.2101,
+                "bm25": 9.825,
+                "used": true
+              },
+              {
+                "id": "m_mtms591miyyy0f",
+                "kind": "fact",
+                "text": "The user set the V2 launch date for the 5th of December 2026.",
+                "score": 0.6666,
+                "vec": 0.1226,
+                "bm25": 6.867,
+                "used": true
+              },
+              {
+                "id": "m_mtmsoppz7g99y7",
+                "kind": "fact",
+                "text": "Devika leads a design team.",
+                "score": 0.6555,
+                "vec": 0.2782,
+                "bm25": 2.474,
+                "used": true
+              },
+              {
+                "id": "m_mtmqomau4vgo9l",
+                "kind": "fact",
+                "text": "Devika handles design reviews for the mobile signup flow.",
+                "score": 0.6479,
+                "vec": 0.296,
+                "bm25": 2.291,
+                "used": true
+              }
+            ]
+          },
+          {
+            "tool": "open_dictation",
+            "args": {
+              "dictation_id": "d_00301"
+            },
+            "ms": 0,
+            "summary": "opened d_00301 (linear, 2026-07-12T13:33)",
+            "candidates": []
+          }
+        ]
+      },
+      "metrics": {
+        "total_ms": 15690,
+        "retrieval_ms": 1234,
+        "model_ms": 14454,
+        "input_tokens": 14987,
+        "output_tokens": 151,
+        "cost_usd": 0.0015591
+      }
+    },
+    {
+      "id": "activation-metric",
+      "group": "fact",
+      "question": "What was the merchant activation rate in July and what was the target?",
+      "why_this_case_exists": null,
+      "expected": {
+        "outcome": "answered",
+        "any_of": [
+          "41"
+        ],
+        "cite_planted": "activation_metric"
+      },
+      "passed": true,
+      "failures": [],
+      "error": null,
+      "outcome": "answered",
+      "confidence": "high",
+      "answer": "You dictated in Notion (d_00233) that the merchant activation rate was 41% against a target of 55%.",
+      "draft": null,
+      "citations": {
+        "memories": [
+          {
+            "id": "m_mtmro1ow16q2ad",
+            "kind": "episode",
+            "statement": "The user dictated a note to Notion about July merchant activation metrics and step two drop-off.",
+            "confidence": 0.95,
+            "support_count": 1,
+            "source": "inferred",
+            "provenance": [
+              "d_00233"
+            ]
+          }
+        ],
+        "dictations": [
+          {
+            "id": "d_00233",
+            "spoken_at": "2026-06-26T09:42:00.000Z",
+            "app": "notion",
+            "formatted": "Looking at the numbers, merchant activation rate for July was 41% against a target of 55%. We really need Devika and Rahul to look at the drop-off on step two."
+          }
+        ]
+      },
+      "reasoning_trace": {
+        "rounds": 4,
+        "notes": [],
+        "steps": [
+          {
+            "tool": "recall",
+            "args": {
+              "query": "merchant activation rate July target"
+            },
+            "ms": 571,
+            "summary": "10 of 10 candidate memories passed the relevance floor (0.3)",
+            "candidates": [
+              {
+                "id": "m_mtmr0ekhbkxyq7",
+                "kind": "fact",
+                "text": "The project Kavach Pay has merchant activation numbers reviewed in weekly metrics.",
+                "score": 0.8154,
+                "vec": 0.3916,
+                "bm25": 5.285,
+                "used": true
+              },
+              {
+                "id": "m_mtmql1lm8d4sy4",
+                "kind": "fact",
+                "text": "Merchants must provide valid KYC documents before bank activation by HDFC.",
+                "score": 0.8142,
+                "vec": 0.3536,
+                "bm25": 5.952,
+                "used": true
+              },
+              {
+                "id": "m_mtmqzi667eq65e",
+                "kind": "fact",
+                "text": "The user's business crossed fifty thousand active merchants.",
+                "score": 0.8096,
+                "vec": 0.2632,
+                "bm25": 6.775,
+                "used": true
+              },
+              {
+                "id": "m_mtmrzjuv14er5x",
+                "kind": "fact",
+                "text": "Devika is assigned the redesign of the three merchant onboarding screens with a target date of August 20th.",
+                "score": 0.7885,
+                "vec": 0.2501,
+                "bm25": 6.565,
+                "used": true
+              },
+              {
+                "id": "m_mtmrsu0whdtzeh",
+                "kind": "fact",
+                "text": "Kavach verifies business proof of address and GST details via Truvia before risk team activation, as part of merchant onboarding requirements that also include business registration and PAN card.",
+                "score": 0.7555,
+                "vec": 0.2623,
+                "bm25": 4.003,
+                "used": true
+              },
+              {
+                "id": "m_mtmro1ow16q2ad",
+                "kind": "episode",
+                "text": "The user dictated a note to Notion about July merchant activation metrics and step two drop-off.",
+                "score": 0.7017,
+                "vec": 0.5838,
+                "bm25": 15.918,
+                "used": true
+              },
+              {
+                "id": "m_mtmqtf46novdox",
+                "kind": "fact",
+                "text": "The user is part of the merchant growth squad.",
+                "score": 0.6786,
+                "vec": 0.2668,
+                "bm25": 0.835,
+                "used": true
+              },
+              {
+                "id": "m_mtmrflm4nhemr3",
+                "kind": "fact",
+                "text": "The agro merchant processes around 50 lakh monthly.",
+                "score": 0.6438,
+                "vec": 0.2465,
+                "bm25": 0.905,
+                "used": true
+              }
+            ]
+          },
+          {
+            "tool": "find_dictations",
+            "args": {
+              "query": "merchant activation rate July target"
+            },
+            "ms": 20,
+            "summary": "8 dictations matched (8 personal dictations are excluded from every search)",
+            "candidates": [
+              {
+                "id": "d_00233",
+                "text": "Looking at the numbers, merchant activation rate for July was 41% against a target of 55%. We really need Devika and Rahul to look at the dr",
+                "score": 1,
+                "vec": 0.4924,
+                "bm25": 20.647,
+                "used": true
+              },
+              {
+                "id": "d_00148",
+                "text": "Hi Farah, sharing the agenda for our weekly metrics review tomorrow morning at 10. Please bring the updated merchant activation numbers for ",
+                "score": 0.9394,
+                "vec": 0.2744,
+                "bm25": 4.597,
+                "used": true
+              },
+              {
+                "id": "d_00301",
+                "text": "Devika, please take up the redesign of the three merchant onboarding screens. Target date is 20th of August. Make sure it matches the new Ka",
+                "score": 0.9318,
+                "vec": 0.2274,
+                "bm25": 6.074,
+                "used": true
+              },
+              {
+                "id": "d_00236",
+                "text": "Had a thought for Kavach Pay onboarding: what if we let merchants skip the GST verification for micro amounts under 10,000 rupees and do it ",
+                "score": 0.9155,
+                "vec": 0.2907,
+                "bm25": 4.366,
+                "used": true
+              },
+              {
+                "id": "d_00418",
+                "text": "Hi Vikram, just updating you that Kavach merchant onboarding is moving on track and we should hit our targets this week.",
+                "score": 0.9077,
+                "vec": 0.2103,
+                "bm25": 6.813,
+                "used": true
+              },
+              {
+                "id": "d_00035",
+                "text": "Hey team, posting the Notion doc paragraph here about onboarding requirements. Basically, merchants must provide valid KYC documents before ",
+                "score": 0.9049,
+                "vec": 0.2506,
+                "bm25": 4.491,
+                "used": true
+              },
+              {
+                "id": "d_00119",
+                "text": "For all new merchants onboarding onto Kavach Pay, we need mandatory verification of the registered business address along with the director ",
+                "score": 0.8917,
+                "vec": 0.2291,
+                "bm25": 4.44,
+                "used": true
+              },
+              {
+                "id": "d_00166",
+                "text": "Merchant onboarding requirements doc: Every merchant must complete KYC verification via Truvia before they can accept payments through Kavac",
+                "score": 0.8626,
+                "vec": 0.2734,
+                "bm25": 4.12,
+                "used": true
+              }
+            ]
+          },
+          {
+            "tool": "open_dictation",
+            "args": {
+              "dictation_id": "d_00233"
+            },
+            "ms": 0,
+            "summary": "opened d_00233 (notion, 2026-06-26T09:42)",
+            "candidates": []
+          }
+        ]
+      },
+      "metrics": {
+        "total_ms": 9317,
+        "retrieval_ms": 591,
+        "model_ms": 8724,
+        "input_tokens": 13491,
+        "output_tokens": 155,
+        "cost_usd": 0.0014111
+      }
+    },
+    {
+      "id": "dropoff",
+      "group": "fact",
+      "question": "Where do merchants drop off most in onboarding?",
+      "why_this_case_exists": null,
+      "expected": {
+        "outcome": "answered",
+        "any_of": [
+          "bank account",
+          "verification",
+          "34"
+        ],
+        "cite_planted": "dropoff_step"
+      },
+      "passed": true,
+      "failures": [],
+      "error": null,
+      "outcome": "answered",
+      "confidence": "high",
+      "answer": "You noted that 34 percent of merchants abandon onboarding at the bank account verification step (dictation d_00376, memories m_mtms8gzqc8fxzl and m_mtms7yi51u1nzz).",
+      "draft": null,
+      "citations": {
+        "memories": [
+          {
+            "id": "m_mtms8gzqc8fxzl",
+            "kind": "fact",
+            "statement": "The biggest drop-off in merchant onboarding is at the bank account verification step, where 34 percent of merchants abandon.",
+            "confidence": 0.95,
+            "support_count": 1,
+            "source": "inferred",
+            "provenance": [
+              "d_00376"
+            ]
+          },
+          {
+            "id": "m_mtms7yi51u1nzz",
+            "kind": "episode",
+            "statement": "The user sent a Slack message to the team reporting that 34 percent of merchants abandon onboarding at the bank account verification step.",
+            "confidence": 0.95,
+            "support_count": 1,
+            "source": "inferred",
+            "provenance": [
+              "d_00376"
+            ]
+          }
+        ],
+        "dictations": [
+          {
+            "id": "d_00376",
+            "spoken_at": "2026-08-01T15:47:00.000Z",
+            "app": "slack",
+            "formatted": "Hey team, just looking at the funnel numbers and ugh, 34 percent of merchants are abandoning right at the bank account verification step. We really need to fix this."
+          }
+        ]
+      },
+      "reasoning_trace": {
+        "rounds": 3,
+        "notes": [],
+        "steps": [
+          {
+            "tool": "recall",
+            "args": {
+              "query": "merchants drop off onboarding"
+            },
+            "ms": 811,
+            "summary": "10 of 10 candidate memories passed the relevance floor (0.3)",
+            "candidates": [
+              {
+                "id": "m_mtms8gzqc8fxzl",
+                "kind": "fact",
+                "text": "The biggest drop-off in merchant onboarding is at the bank account verification step, where 34 percent of merchants abandon.",
+                "score": 0.8671,
+                "vec": 0.5719,
+                "bm25": 7.465,
+                "used": true
+              },
+              {
+                "id": "m_mtmql0g3lu5rjf",
+                "kind": "episode",
+                "text": "The user captured a note in Notion about merchant drop-offs at the document upload step in the onboarding flow.",
+                "score": 0.6383,
+                "vec": 0.4845,
+                "bm25": 7.182,
+                "used": true
+              },
+              {
+                "id": "m_mtmrfhtg53l9zl",
+                "kind": "episode",
+                "text": "The user dictated an idea into Notion for merchant onboarding to reduce drop-offs on step two by letting merchants upload their GST certificate first.",
+                "score": 0.6142,
+                "vec": 0.5218,
+                "bm25": 5.816,
+                "used": true
+              },
+              {
+                "id": "m_mtms7yi51u1nzz",
+                "kind": "episode",
+                "text": "The user sent a Slack message to the team reporting that 34 percent of merchants abandon onboarding at the bank account verification step.",
+                "score": 0.5628,
+                "vec": 0.4839,
+                "bm25": 4.597,
+                "used": true
+              },
+              {
+                "id": "m_mtms5hpd99e7zb",
+                "kind": "episode",
+                "text": "The user dictated a weekly metrics review doc covering merchant onboarding drop-off rates and team actions.",
+                "score": 0.5511,
+                "vec": 0.3714,
+                "bm25": 7.039,
+                "used": true
+              },
+              {
+                "id": "m_mtmsi4crf6wpwe",
+                "kind": "episode",
+                "text": "The user dictated a standup update in Linear regarding merchant onboarding progress and metrics.",
+                "score": 0.5241,
+                "vec": 0.4489,
+                "bm25": 4.552,
+                "used": true
+              },
+              {
+                "id": "m_mtmtkvbtxsq41d",
+                "kind": "preference",
+                "text": "Wants all merchant emails reviewed by Farah before they go out.",
+                "score": 0.4411,
+                "vec": 0.6576,
+                "bm25": 0,
+                "used": true
+              },
+              {
+                "id": "m_mtmsijc3v4jnts",
+                "kind": "fact",
+                "text": "Over 12,000 merchants were onboarded during the week of August 15, 2026.",
+                "score": 0.4232,
+                "vec": 0.5342,
+                "bm25": 0,
+                "used": true
+              }
+            ]
+          },
+          {
+            "tool": "open_dictation",
+            "args": {
+              "dictation_id": "d_00376"
+            },
+            "ms": 0,
+            "summary": "opened d_00376 (slack, 2026-08-01T15:47)",
+            "candidates": []
+          }
+        ]
+      },
+      "metrics": {
+        "total_ms": 4485,
+        "retrieval_ms": 811,
+        "model_ms": 3673,
+        "input_tokens": 8564,
+        "output_tokens": 169,
+        "cost_usd": 0.0009240000000000001
+      }
+    },
+    {
+      "id": "upi-decision",
+      "group": "fact",
+      "question": "What did we decide about UPI autopay, and why?",
+      "why_this_case_exists": null,
+      "expected": {
+        "outcome": "answered",
+        "any_of": [
+          "out of scope",
+          "not support",
+          "compliance"
+        ],
+        "cite_planted": "upi_decision"
+      },
+      "passed": true,
+      "failures": [],
+      "error": null,
+      "outcome": "answered",
+      "confidence": "high",
+      "answer": "You decided to drop UPI autopay for merchant subscriptions in V2 because the mandate flow requires a separate compliance review with HDFC before you can touch it (m_mtms0vyl3pmxhh, d_00307, d_00441).",
+      "draft": null,
+      "citations": {
+        "memories": [
+          {
+            "id": "m_mtms0vyl3pmxhh",
+            "kind": "fact",
+            "statement": "The user decided to drop UPI autopay and keep it out of scope for V2.",
+            "confidence": 0.9675,
+            "support_count": 2,
+            "source": "inferred",
+            "provenance": [
+              "d_00307",
+              "d_00441"
+            ]
+          }
+        ],
+        "dictations": [
+          {
+            "id": "d_00307",
+            "spoken_at": "2026-07-14T11:24:00.000Z",
+            "app": "notion",
+            "formatted": "Decided to drop UPI autopay for merchant subscriptions in V2 because the mandate flow needs a separate compliance review with HDFC before we can even touch it."
+          },
+          {
+            "id": "d_00441",
+            "spoken_at": "2026-08-16T14:32:00.000Z",
+            "app": "slack",
+            "formatted": "Hey Vikram, just to answer your question: UPI Autopay is definitely out of scope for V2. Also, the compliance review from HDFC is still the main blocker right now."
+          }
+        ]
+      },
+      "reasoning_trace": {
+        "rounds": 4,
+        "notes": [],
+        "steps": [
+          {
+            "tool": "recall",
+            "args": {
+              "query": "UPI autopay"
+            },
+            "ms": 507,
+            "summary": "10 of 10 candidate memories passed the relevance floor (0.3)",
+            "candidates": [
+              {
+                "id": "m_mtms0vyl3pmxhh",
+                "kind": "fact",
+                "text": "The user decided to drop UPI autopay and keep it out of scope for V2.",
+                "score": 0.916,
+                "vec": 0.6197,
+                "bm25": 14.894,
+                "used": true
+              },
+              {
+                "id": "m_mtmsijccuv45qn",
+                "kind": "episode",
+                "text": "The user dictated a Slack message to Vikram stating that UPI Autopay is out of scope for V2 and HDFC compliance review is the main blocker.",
+                "score": 0.774,
+                "vec": 0.2419,
+                "bm25": 8.778,
+                "used": true
+              },
+              {
+                "id": "m_mtms0k1gipxort",
+                "kind": "episode",
+                "text": "The user dictated a Notion note recording the decision to drop UPI autopay for merchant subscriptions in V2 due to compliance requirements with HDFC.",
+                "score": 0.7128,
+                "vec": 0.3459,
+                "bm25": 12.699,
+                "used": true
+              },
+              {
+                "id": "m_mtmtkvbtxsq41d",
+                "kind": "preference",
+                "text": "Wants all merchant emails reviewed by Farah before they go out.",
+                "score": 0.4411,
+                "vec": 0.5288,
+                "bm25": 0,
+                "used": true
+              },
+              {
+                "id": "m_mtmrvmtpgrgc0t",
+                "kind": "fact",
+                "text": "Rahul patched the Truvia token expiry outage by restarting the gateway service.",
+                "score": 0.3805,
+                "vec": 0.067,
+                "bm25": 0,
+                "used": true
+              },
+              {
+                "id": "m_mtmscgbrw8vefj",
+                "kind": "episode",
+                "text": "The user created a Linear ticket reporting that Rahul finished the Truvia integration and webhook retries are being tested in staging.",
+                "score": 0.3655,
+                "vec": 0.0885,
+                "bm25": 0,
+                "used": true
+              },
+              {
+                "id": "m_mtmsopq6m8jxqv",
+                "kind": "episode",
+                "text": "The user sent a Slack message to Devika discussing high drop-off on the second screen of Kavach merchant onboarding flows.",
+                "score": 0.3408,
+                "vec": 0.0591,
+                "bm25": 0,
+                "used": true
+              },
+              {
+                "id": "m_mtmrjw1nbjhn84",
+                "kind": "episode",
+                "text": "The user dictated a doc reminder to follow up with the HDFC team about webhook retries.",
+                "score": 0.334,
+                "vec": 0.0891,
+                "bm25": 0,
+                "used": true
+              }
+            ]
+          },
+          {
+            "tool": "open_dictation",
+            "args": {
+              "dictation_id": "d_00307"
+            },
+            "ms": 1,
+            "summary": "opened d_00307 (notion, 2026-07-14T11:24)",
+            "candidates": []
+          },
+          {
+            "tool": "open_dictation",
+            "args": {
+              "dictation_id": "d_00441"
+            },
+            "ms": 1,
+            "summary": "opened d_00441 (slack, 2026-08-16T14:32)",
+            "candidates": []
+          }
+        ]
+      },
+      "metrics": {
+        "total_ms": 27397,
+        "retrieval_ms": 507,
+        "model_ms": 26887,
+        "input_tokens": 12555,
+        "output_tokens": 195,
+        "cost_usd": 0.0013335
+      }
+    },
+    {
+      "id": "hdfc-status",
+      "group": "recency",
+      "question": "Where are we with the HDFC integration?",
+      "why_this_case_exists": null,
+      "expected": {
+        "outcome": "answered",
+        "any_of": [
+          "sandbox",
+          "production",
+          "credentials",
+          "stable"
+        ],
+        "cite_planted": "hdfc_sandbox_stable"
+      },
+      "passed": false,
+      "failures": [
+        "outcome was \"abstained\", expected answered",
+        "answer contained none of: sandbox | production | credentials | stable",
+        "did not cite the source dictation for \"hdfc_sandbox_stable\" (d_00483)"
+      ],
+      "error": null,
+      "outcome": "abstained",
+      "confidence": "medium",
+      "answer": "You dictated on August 30 that the bank integration is mostly on track, though the HDFC team asked for some extra security docs (d_00497). Earlier, on August 28, you noted that a flaky integration test for HDFC was still failing intermittently on staging due to network lag (d_00485).",
+      "draft": null,
+      "citations": {
+        "memories": [],
+        "dictations": []
+      },
+      "reasoning_trace": {
+        "rounds": 2,
+        "notes": [
+          "model produced free text instead of calling respond(); treated as an answer with no citations"
+        ],
+        "steps": [
+          {
+            "tool": "find_dictations",
+            "args": {
+              "query": "HDFC integration"
+            },
+            "ms": 17,
+            "summary": "8 dictations matched (8 personal dictations are excluded from every search)",
+            "candidates": [
+              {
+                "id": "d_00032",
+                "text": "Hey Rahul, so basically for merchant onboarding we finished the HDFC integration today, and the Truvia KYC check is still pending.",
+                "score": 0.9683,
+                "vec": 0.3745,
+                "bm25": 4.321,
+                "used": true
+              },
+              {
+                "id": "d_00497",
+                "text": "Bank integration is mostly on track. The HDFC team asked for some extra security docs.",
+                "score": 0.9621,
+                "vec": 0.341,
+                "bm25": 4.876,
+                "used": true
+              },
+              {
+                "id": "d_00238",
+                "text": "Linear ticket: the API integration test with HDFC is failing intermittently on the status check endpoint. Rahul, can you look at the timeout",
+                "score": 0.9245,
+                "vec": 0.3339,
+                "bm25": 4.188,
+                "used": true
+              },
+              {
+                "id": "d_00140",
+                "text": "Hi team, just emailing to confirm sprint planning for tomorrow at 10 AM, where we will review the pending backlog items for the HDFC integra",
+                "score": 0.9215,
+                "vec": 0.3067,
+                "bm25": 4.457,
+                "used": true
+              },
+              {
+                "id": "d_00149",
+                "text": "Just finished the HDFC integration call. They said the sandbox environment will be down for maintenance this weekend, so we should pause our",
+                "score": 0.873,
+                "vec": 0.303,
+                "bm25": 4.163,
+                "used": true
+              },
+              {
+                "id": "d_00075",
+                "text": "Linear ticket for the flaky integration test in merchant onboarding service. Basically, the test fails intermittently when HDFC timeout happ",
+                "score": 0.8531,
+                "vec": 0.2931,
+                "bm25": 4.309,
+                "used": true
+              },
+              {
+                "id": "d_00437",
+                "text": "Hey team, urgent Linear ticket for Rahul: the integration test keeps flaking on the sandbox environment. Let us fix it today.",
+                "score": 0.8508,
+                "vec": 0.41,
+                "bm25": 3.402,
+                "used": true
+              },
+              {
+                "id": "d_00316",
+                "text": "Linear ticket: Flaky integration test in Kavach Pay KYC module. Ugh, it fails randomly on staging when Truvia takes too long to respond.",
+                "score": 0.8506,
+                "vec": 0.4103,
+                "bm25": 3.311,
+                "used": true
+              }
+            ]
+          },
+          {
+            "tool": "recall",
+            "args": {
+              "query": "HDFC integration"
+            },
+            "ms": 622,
+            "summary": "10 of 10 candidate memories passed the relevance floor (0.3)",
+            "candidates": [
+              {
+                "id": "m_mtmr79w28qew0k",
+                "kind": "fact",
+                "text": "The HDFC integration project scope delay is estimated by Rahul to be at least two weeks.",
+                "score": 0.8472,
+                "vec": 0.6075,
+                "bm25": 5.086,
+                "used": true
+              },
+              {
+                "id": "m_mtms9b3bqelofd",
+                "kind": "fact",
+                "text": "Rahul is assigned to the HDFC integration tasks.",
+                "score": 0.828,
+                "vec": 0.5268,
+                "bm25": 5.22,
+                "used": true
+              },
+              {
+                "id": "m_mtmsbls83nqzry",
+                "kind": "fact",
+                "text": "The HDFC integration production environment is capped at twenty requests per second.",
+                "score": 0.8212,
+                "vec": 0.5724,
+                "bm25": 5.007,
+                "used": true
+              },
+              {
+                "id": "m_mtmr0gv5ics4v3",
+                "kind": "fact",
+                "text": "The user is working with HDFC on a production integration requiring webhook retry logic updates.",
+                "score": 0.8079,
+                "vec": 0.5639,
+                "bm25": 5.073,
+                "used": true
+              },
+              {
+                "id": "m_mtmsq8efijnkos",
+                "kind": "episode",
+                "text": "The user dictated call notes for a Notion document regarding the HDFC bank integration status.",
+                "score": 0.7993,
+                "vec": 0.5448,
+                "bm25": 5.086,
+                "used": true
+              },
+              {
+                "id": "m_mtmspo42edpna9",
+                "kind": "episode",
+                "text": "The user dictated a Linear ticket description to fix a flaky integration test for HDFC.",
+                "score": 0.7875,
+                "vec": 0.5791,
+                "bm25": 4.973,
+                "used": true
+              },
+              {
+                "id": "m_mtmrar9ps4p69f",
+                "kind": "fact",
+                "text": "Rahul finished the HDFC payment gateway integration.",
+                "score": 0.7867,
+                "vec": 0.3856,
+                "bm25": 5.22,
+                "used": true
+              },
+              {
+                "id": "m_mtmql0fskkpa1o",
+                "kind": "fact",
+                "text": "The HDFC integration for merchant onboarding was finished on May 15, 2026.",
+                "score": 0.7348,
+                "vec": 0.4843,
+                "bm25": 4.592,
+                "used": true
+              }
+            ]
+          }
+        ]
+      },
+      "metrics": {
+        "total_ms": 3896,
+        "retrieval_ms": 639,
+        "model_ms": 3255,
+        "input_tokens": 5582,
+        "output_tokens": 108,
+        "cost_usd": 0.0006014
+      }
+    }
+  ]
+}

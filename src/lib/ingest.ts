@@ -404,7 +404,8 @@ async function reconcileCandidate(c: Candidate, d: Dictation, userId: string, ru
     c.kind,
     cvec?.vec,
     3,
-    embeddingTextFor({ kind: c.kind, statement: c.statement, subject: c.subject })
+    embeddingTextFor({ kind: c.kind, statement: c.statement, subject: c.subject }),
+    cvec?.provider
   );
   const { same: SAME_THRESHOLD, near: NEAR_THRESHOLD } =
     THRESHOLDS[cvec?.provider ?? 'local'] ?? THRESHOLDS.local;

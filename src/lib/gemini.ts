@@ -185,9 +185,12 @@ export async function generateJson<T>(opts: GenerateOpts): Promise<{ value: T; u
 export type EmbedResult = { vectors: Float32Array[]; provider: 'gemini' | 'local' };
 
 /**
- * Circuit breaker. Once the embedding API has failed (quota, outage), stop paying the
- * retry cost on every subsequent batch and use the local embedder for the rest of the
- * process. Retrying an exhausted daily quota 500 times is not resilience, it is a hang.
+ * Circuit breaker for embeddings.
+ *
+ * It trips only on a DAILY quota or a missing key — the conditions no amount of waiting
+ * fixes. A per-minute rate limit is not one of those: it is what back-off is for, and
+ * tripping on it would throw away good vectors for the rest of the run. (This is the
+ * same distinction the key rotation makes, and getting it wrong cost a whole ingest.)
  */
 let embeddingApiDown = false;
 export function embeddingProviderInUse(): 'gemini' | 'local' {
@@ -236,11 +239,16 @@ export async function embedWithProvider(
     return { vectors: out, provider: 'gemini' };
   } catch (e) {
     if (force === 'gemini') throw e; // caller demanded the API specifically
-    // Quota, outage, or no key: keep working with the local embedder, and stop trying
-    // the API for the rest of this process.
+    const msg = String((e as Error)?.message ?? e);
+    const terminal = /PerDay|per day|API_KEY|not set|API key/i.test(msg);
+    if (!terminal) {
+      // A transient rate limit: fall back for this batch only, and try the API again on
+      // the next one rather than giving up on neural vectors for the whole run.
+      return { vectors: localEmbedBatch(texts, config.embedDim), provider: 'local' };
+    }
     if (!embeddingApiDown) {
       embeddingApiDown = true;
-      console.warn(`  [embeddings] API unavailable (${String((e as Error)?.message ?? e).slice(0, 120)})`);
+      console.warn(`  [embeddings] daily quota exhausted (${msg.slice(0, 120)})`);
       console.warn('  [embeddings] falling back to the local embedder for the rest of this run');
     }
     return { vectors: localEmbedBatch(texts, config.embedDim), provider: 'local' };

@@ -56,7 +56,13 @@ for (const c of cases) {
   let result: any;
   let error: string | null = null;
   try {
-    result = await askHeyKivi(userId, c.question);
+    // A run of thirty cases must not be lost to one request that never settles.
+    result = await Promise.race([
+      askHeyKivi(userId, c.question),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('case timed out after 180s')), 180_000)
+      ),
+    ]);
   } catch (e: any) {
     error = String(e?.message ?? e);
     result = { answer: '', outcome: 'error', citations: { memories: [], dictations: [] }, trace: { steps: [], notes: [error], totalMs: Date.now() - started, retrievalMs: 0, modelMs: 0, inputTokens: 0, outputTokens: 0, costUsd: 0, rounds: 0 } };
@@ -171,6 +177,14 @@ for (const c of cases) {
   };
   results.push(record);
   console.log(`${record.passed ? 'pass' : 'FAIL'} (${((Date.now() - started) / 1000).toFixed(1)}s)${record.passed ? '' : ' — ' + failures.join('; ')}`);
+
+  // Written after every case: an evaluation that loses its evidence when the last case
+  // fails is not an evaluation. The final write below replaces this with the full report.
+  fs.mkdirSync(outDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(outDir, 'results.partial.json'),
+    JSON.stringify({ in_progress: true, completed: results.length, of: cases.length, cases: results }, null, 2)
+  );
 }
 
 // --- memory state checks (no model involved) ---
@@ -283,6 +297,7 @@ fs.writeFileSync(path.join(outDir, 'results.md'), renderMarkdown(summary, result
 
 console.log(`\n${summary.cases.passed}/${summary.cases.total} cases passed · ${summary.memory_state.passed}/${summary.memory_state.total} memory-state checks passed`);
 console.log(`p50 ${summary.latency_ms.end_to_end_p50}ms · p90 ${summary.latency_ms.end_to_end_p90}ms · $${summary.cost_usd.this_eval} total`);
+try { fs.rmSync(path.join(outDir, 'results.partial.json')); } catch { /* nothing to clean up */ }
 console.log(`wrote ${path.join(outDir, 'results.json')} and results.md`);
 
 function renderMarkdown(s: any, rs: any[], ms: any[]): string {
