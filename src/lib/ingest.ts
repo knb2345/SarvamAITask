@@ -59,12 +59,31 @@ export function normaliseRecord(r: RawRecord, userId: string, index: number): Di
   };
 }
 
+/**
+ * Upsert, never INSERT OR REPLACE.
+ *
+ * REPLACE deletes the existing row before inserting the new one, and every table that
+ * references a dictation cascades on delete — so re-running the importer over a corpus
+ * it had already read silently destroyed the provenance of every memory learned from it,
+ * along with the record of what had been refused. A memory that cannot show the sentence
+ * behind it is exactly what this product promises never to keep.
+ */
 export function insertDictation(d: Dictation) {
   db()
     .prepare(
-      `INSERT OR REPLACE INTO dictations
+      `INSERT INTO dictations
         (id, user_id, spoken_at, app, context_label, style, duration_ms, raw_asr, formatted, metadata_json)
-       VALUES (?,?,?,?,?,?,?,?,?,?)`
+       VALUES (?,?,?,?,?,?,?,?,?,?)
+       ON CONFLICT(id) DO UPDATE SET
+         user_id = excluded.user_id,
+         spoken_at = excluded.spoken_at,
+         app = excluded.app,
+         context_label = excluded.context_label,
+         style = excluded.style,
+         duration_ms = excluded.duration_ms,
+         raw_asr = excluded.raw_asr,
+         formatted = excluded.formatted,
+         metadata_json = excluded.metadata_json`
     )
     .run(d.id, d.user_id, d.spoken_at, d.app, d.context_label, d.style, d.duration_ms, d.raw_asr, d.formatted, d.metadata_json);
   db().prepare('DELETE FROM dictations_fts WHERE dictation_id = ?').run(d.id);

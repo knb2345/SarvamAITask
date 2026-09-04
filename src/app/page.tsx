@@ -56,7 +56,17 @@ export default function HeyKivi() {
       });
       const data = await res.json();
       if (data.error) {
-        setTurns((t) => [...t, { role: 'kivi', text: 'Something went wrong reaching the model.', error: data.error }]);
+        const quota = /quota|429|exhausted/i.test(String(data.error));
+        setTurns((t) => [
+          ...t,
+          {
+            role: 'kivi',
+            text: quota
+              ? 'I have run out of model quota for now, so I cannot look anything up. Everything already in your memory is still here to read.'
+              : 'I could not reach the model just now. Nothing has been changed.',
+            error: String(data.error).slice(0, 300),
+          },
+        ]);
       } else {
         setConversationId(data.conversationId);
         setTurns((t) => [...t, { role: 'kivi', ...data, text: data.answer }]);

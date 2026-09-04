@@ -213,6 +213,29 @@ for (const check of spec.memory_state_checks ?? []) {
       if (!row) failures.push(`expected a superseded memory containing "${term}", found none`);
     }
   }
+  if (check.requires_evidence_for_inferred) {
+    // A memory that cannot show its source is the one thing this product promises not
+    // to keep. Anything that strips provenance — a cascading delete, a careless
+    // re-import — has to fail here rather than pass quietly.
+    const orphans = db()
+      .prepare(
+        `SELECT id, statement FROM memories m
+         WHERE m.user_id = ? AND m.status = 'active' AND m.source = 'inferred'
+           AND NOT EXISTS (SELECT 1 FROM memory_evidence e WHERE e.memory_id = m.id)
+         LIMIT 5`
+      )
+      .all(userId) as any[];
+    const total = (db()
+      .prepare(
+        `SELECT COUNT(*) c FROM memories m
+         WHERE m.user_id = ? AND m.status = 'active' AND m.source = 'inferred'
+           AND NOT EXISTS (SELECT 1 FROM memory_evidence e WHERE e.memory_id = m.id)`
+      )
+      .get(userId) as any).c;
+    if (total > 0) {
+      failures.push(`${total} inferred memories have no evidence, e.g. ${orphans.map((o) => o.id).join(', ')}`);
+    }
+  }
   if (check.requires_personal_dictations_min) {
     const n = (db()
       .prepare(`SELECT COUNT(*) c FROM dictations WHERE user_id = ? AND sensitivity = 'personal'`)

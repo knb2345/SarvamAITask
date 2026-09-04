@@ -415,6 +415,11 @@
       "description": "Personal dictations are classified and produce no memories at all",
       "requires_personal_dictations_min": 4,
       "no_memory_from_personal": true
+    },
+    {
+      "id": "every-inferred-memory-has-evidence",
+      "description": "Every memory Kivi inferred can still show the dictation it came from",
+      "requires_evidence_for_inferred": true
     }
   ]
 }

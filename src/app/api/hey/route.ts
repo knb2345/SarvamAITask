@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
     const turnId = saveTurn(conversationId, 'kivi', result.answer, result);
     return NextResponse.json({ ...result, conversationId, turnId });
   } catch (e: any) {
-    return NextResponse.json({ error: String(e?.message ?? e) }, { status: 500 });
+    const message = String(e?.message ?? e) || 'the model could not be reached';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

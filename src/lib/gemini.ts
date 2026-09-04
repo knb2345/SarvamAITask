@@ -14,7 +14,38 @@ type Family = 'generate' | 'embed';
 // Quotas are per metric, not per key: a key can be out of embedding calls while still
 // having generation left. Exhaustion is therefore tracked per (family, key).
 const keyIndex: Record<Family, number> = { generate: 0, embed: 0 };
-const exhausted: Record<Family, Set<number>> = { generate: new Set(), embed: new Set() };
+
+/**
+ * When each key was found to be out of daily quota. It is a timestamp rather than a flag
+ * because this process may outlive the exhaustion: a dev server left running overnight
+ * crosses the quota reset, and a key retired permanently at 6pm would still be retired
+ * the next morning. Retired keys are reconsidered after a while.
+ */
+const retiredAt: Record<Family, Map<number, number>> = { generate: new Map(), embed: new Map() };
+const RETIRE_FOR_MS = 15 * 60 * 1000;
+
+function isRetired(family: Family, i: number): boolean {
+  const at = retiredAt[family].get(i);
+  if (at === undefined) return false;
+  if (Date.now() - at > RETIRE_FOR_MS) {
+    retiredAt[family].delete(i); // give it another chance; quotas do reset
+    return false;
+  }
+  return true;
+}
+
+const exhausted: Record<Family, { has: (i: number) => boolean; add: (i: number) => void; get size(): number }> = {
+  generate: {
+    has: (i) => isRetired('generate', i),
+    add: (i) => retiredAt.generate.set(i, Date.now()),
+    get size() { return [...retiredAt.generate.keys()].filter((i) => isRetired('generate', i)).length; },
+  },
+  embed: {
+    has: (i) => isRetired('embed', i),
+    add: (i) => retiredAt.embed.set(i, Date.now()),
+    get size() { return [...retiredAt.embed.keys()].filter((i) => isRetired('embed', i)).length; },
+  },
+};
 
 function currentKey(family: Family): string {
   const keys = config.geminiKeys;
@@ -61,8 +92,8 @@ function nextKey(family: Family): boolean {
 export function keyStatus() {
   return {
     keys: config.geminiKeys.length,
-    generate: { inUse: keyIndex.generate + 1, exhausted: [...exhausted.generate].map((i) => i + 1) },
-    embed: { inUse: keyIndex.embed + 1, exhausted: [...exhausted.embed].map((i) => i + 1) },
+    generate: { inUse: keyIndex.generate + 1, retired: [...retiredAt.generate.keys()].map((i) => i + 1) },
+    embed: { inUse: keyIndex.embed + 1, retired: [...retiredAt.embed.keys()].map((i) => i + 1) },
   };
 }
 
