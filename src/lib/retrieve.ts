@@ -23,6 +23,36 @@ const RRF_K = 60;
  * each space is searched on its own and the rankings are fused, rather than pretending
  * one number means the same thing in both.
  */
+/**
+ * The rarest terms in a query, by document frequency in the memory index.
+ *
+ * A whole question carries its own noise: "when does merchant onboarding V2 launch"
+ * contains two terms that appear in hundreds of memories and two that appear in a
+ * handful. Ranked on every term at once, the common ones win and the precise memory is
+ * buried. So the distinctive terms are also searched on their own, and the two rankings
+ * are fused — which makes a long spoken question behave like the keyword query a person
+ * would have typed.
+ */
+function rareTerms(query: string, keep = 5): string[] {
+  const terms = [...new Set((ftsEscape(query).match(/"([a-z0-9]+)"/g) ?? []).map((t) => t.replace(/"/g, '')))];
+  if (terms.length <= 1) return [];
+  const total = (db().prepare('SELECT COUNT(*) c FROM memories_fts').get() as any).c || 1;
+  const count = db().prepare('SELECT COUNT(*) c FROM memories_fts WHERE memories_fts MATCH ?');
+  const scored = terms.map((t) => {
+    try {
+      return { term: t, df: (count.get(`"${t}"`) as any).c };
+    } catch {
+      return { term: t, df: total };
+    }
+  });
+  // Keep only terms that actually discriminate: present, but in a small share of the
+  // index. A term in a third of all memories tells you nothing about which one is meant.
+  const ceiling = Math.max(10, Math.round(total * 0.05));
+  const distinctive = scored.filter((x) => x.df > 0 && x.df <= ceiling);
+  if (distinctive.length === 0 || distinctive.length === terms.length) return [];
+  return distinctive.sort((a, b) => a.df - b.df).slice(0, keep).map((x) => x.term);
+}
+
 export function storedProviders(table: 'memory_embeddings' | 'dictation_embeddings'): ('gemini' | 'local')[] {
   return (db()
     .prepare(`SELECT provider, COUNT(*) c FROM ${table} GROUP BY provider ORDER BY c DESC`)
@@ -92,18 +122,25 @@ export async function searchMemories(opts: MemorySearchOpts): Promise<ScoredMemo
     }
   }
 
-  // Lexical
-  const match = ftsEscape(opts.query);
-  let bmRanked: { id: string; score: number }[] = [];
-  if (match) {
+  // Lexical — the whole query, and again on just its most distinctive terms.
+  const lexRankings: { id: string; score: number }[][] = [];
+  const runFts = (match: string) => {
+    if (!match) return;
     const rows = db()
       .prepare(
         `SELECT memory_id, bm25(memories_fts, 0.0, 1.0, 0.6, 0.4) AS b
          FROM memories_fts WHERE memories_fts MATCH ? ORDER BY b LIMIT 60`
       )
       .all(match) as any[];
-    bmRanked = rows.filter((r) => allowed.has(r.memory_id)).map((r) => ({ id: r.memory_id, score: -r.b }));
-  }
+    lexRankings.push(rows.filter((r) => allowed.has(r.memory_id)).map((r) => ({ id: r.memory_id, score: -r.b })));
+  };
+  // A spoken question carries filler the person would never type. Where it contains
+  // terms that actually discriminate, search on those; a term appearing in a third of
+  // all memories cannot tell you which memory is meant, and including it lets the
+  // commonplace outrank the exact answer.
+  const rare = rareTerms(opts.query);
+  runFts(rare.length ? rare.map((t) => `"${t}"`).join(' OR ') : ftsEscape(opts.query));
+  const bmRanked = lexRankings[0] ?? [];
 
   // Best rank a memory reached in any embedding space, with its score there.
   const vecRank = new Map<string, number>();
@@ -116,8 +153,16 @@ export async function searchMemories(opts: MemorySearchOpts): Promise<ScoredMemo
       }
     });
   }
-  const bmRank = new Map(bmRanked.map((r, i) => [r.id, i + 1]));
-  const bmScore = new Map(bmRanked.map((r) => [r.id, r.score]));
+  const bmRank = new Map<string, number>();
+  const bmScore = new Map<string, number>();
+  for (const ranking of lexRankings) {
+    ranking.forEach((r, i) => {
+      if (!bmRank.has(r.id) || i + 1 < bmRank.get(r.id)!) {
+        bmRank.set(r.id, i + 1);
+        bmScore.set(r.id, r.score);
+      }
+    });
+  }
 
   const now = Date.now();
   const scored = pool
@@ -130,19 +175,57 @@ export async function searchMemories(opts: MemorySearchOpts): Promise<ScoredMemo
       const ageDays = Math.max(0, (now - Date.parse(m.last_seen_at)) / 86_400_000);
       const recency = m.kind === 'episode' ? 0.75 + 0.25 * Math.exp(-ageDays / 45) : 1;
       const conf = 0.7 + 0.3 * m.confidence;
+      // A fact or a stated preference is a claim about what is true; an episode is an
+      // index entry saying something happened. At equal relevance, prefer the claim.
+      const kindWeight = m.kind === 'episode' ? 0.85 : 1.0;
       return {
         ...m,
-        score: fused * strength * recency * conf,
+        score: fused * strength * recency * conf * kindWeight,
         vec_score: vecScore.get(m.id) ?? 0,
         bm25_score: bmScore.get(m.id) ?? 0,
         evidence: [] as any[],
       };
     })
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit);
+    .sort((a, b) => b.score - a.score);
 
-  for (const m of scored) m.evidence = evidenceFor(m.id).slice(0, 3);
-  return scored;
+  const chosen = opts.kinds?.length ? scored.slice(0, limit) : quotaByKind(scored, limit);
+  for (const m of chosen) m.evidence = evidenceFor(m.id).slice(0, 3);
+  return chosen;
+}
+
+/**
+ * Guarantee each kind of memory a place in the result.
+ *
+ * There is one episode per dictation and only a few hundred facts, so a flat ranking is
+ * won by whichever kind is most numerous: ask "when does V2 launch" and you get twenty
+ * episodes that mention merchant onboarding, while the one fact carrying the date never
+ * surfaces. The kinds answer different questions — a fact states what is true, an episode
+ * says what happened — so each is given its own share of the context and they compete
+ * within their kind, not against each other.
+ */
+function quotaByKind(scored: ScoredMemory[], limit: number): ScoredMemory[] {
+  const quotas: Record<string, number> = {
+    fact: Math.max(3, Math.round(limit * 0.45)),
+    preference: Math.max(2, Math.round(limit * 0.2)),
+    episode: Math.max(3, Math.round(limit * 0.35)),
+  };
+  const taken: ScoredMemory[] = [];
+  const used = new Set<string>();
+  for (const kind of ['fact', 'preference', 'episode']) {
+    for (const m of scored.filter((x) => x.kind === kind).slice(0, quotas[kind])) {
+      taken.push(m);
+      used.add(m.id);
+    }
+  }
+  // Any unused room goes to whatever scored highest overall.
+  for (const m of scored) {
+    if (taken.length >= limit) break;
+    if (!used.has(m.id)) {
+      taken.push(m);
+      used.add(m.id);
+    }
+  }
+  return taken.sort((a, b) => b.score - a.score).slice(0, limit);
 }
 
 export type DictationSearchOpts = {
