@@ -14,6 +14,7 @@ export default function Rail() {
 
   const items = [
     { href: '/', label: 'Hey Kivi', count: null as string | null },
+    { href: '/dictate', label: 'Dictation', count: null },
     { href: '/memory', label: 'What Kivi knows', count: stats ? String(stats.memories.active) : null },
     { href: '/history', label: 'Dictation history', count: stats ? String(stats.dictations) : null },
     { href: '/inspect', label: 'Why', count: null },
@@ -38,8 +39,8 @@ export default function Rail() {
       </nav>
 
       <div className="rail-foot">
-        Dictation still works the way it always did — styles and phonetic memory, nothing else.
-        What is on these pages only ever reaches Hey&nbsp;Kivi.
+        Dictation works the way it always did — styles and nothing else. Everything on these
+        pages reaches Hey&nbsp;Kivi only.
       </div>
     </aside>
   );

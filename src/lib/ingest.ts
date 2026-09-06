@@ -322,10 +322,10 @@ export async function ingest(
 
     // Episodes: exactly one per dictation, never merged. This is the index over "what happened".
     try {
-    if (res.sensitivity === 'personal') {
+    if (res.sensitivity === 'personal' || res.sensitivity === 'secret') {
       db()
-        .prepare(`UPDATE dictations SET sensitivity = 'personal', sensitivity_reason = ? WHERE id = ?`)
-        .run(res.sensitivity_reason ?? 'recognised as personal rather than working material', d.id);
+        .prepare(`UPDATE dictations SET sensitivity = ?, sensitivity_reason = ? WHERE id = ?`)
+        .run(res.sensitivity, res.sensitivity_reason ?? 'recognised as personal rather than working material', d.id);
       decision(
         runId, d.id, { sensitivity: 'personal' }, 'rejected',
         `personal, not working material: ${res.sensitivity_reason ?? 'no memory written and Hey Kivi will not retrieve it'}`

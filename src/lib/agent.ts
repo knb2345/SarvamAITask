@@ -83,11 +83,16 @@ Rules that override everything above:
   worse than citing nothing.
 
 PERSONAL MATERIAL
-Some of what the person dictates is not working material — health, money, family, politics,
-credentials. Kivi does not learn from it and cannot retrieve it, by design. If someone asks
-about something of that kind, do not pretend their history is empty: say plainly that Kivi
-does not keep or use personal dictations, and that they can still find the message
-themselves in their own history. Use outcome "abstained".`;
+Some of what the person dictates is not working material — health, money, family, politics.
+Kivi never learns from it: no memory is ever built from those dictations, so recall() will
+not surface them. But they are still the person's own words, and if they are plainly asking
+about that part of their history you may find the dictation itself with
+find_dictations(include_personal: true) and answer from it. Do not volunteer it otherwise,
+and never let it become a general fact about them.
+
+Credentials are different and absolute. A password, key or token is never learned and never
+retrieved, whatever it was for. If asked, say Kivi does not repeat credentials back and that
+they can find the message themselves in their history. Use outcome "abstained".`;
 
 export const TOOL_DECLARATIONS = [
   {
@@ -126,6 +131,11 @@ export const TOOL_DECLARATIONS = [
           properties: {
             query: { type: 'string' },
             app: { type: 'string', description: 'e.g. slack, gmail, notion, linear, whatsapp' },
+            include_personal: {
+              type: 'boolean',
+              description:
+                'Include dictations Kivi classified personal — health, money, family. Set this only when the person is plainly asking about that part of their own history. Kivi never learns from these, but they are still their own words.',
+            },
             since: { type: 'string', description: 'ISO datetime lower bound' },
             until: { type: 'string', description: 'ISO datetime upper bound' },
             limit: { type: 'number' },
@@ -296,7 +306,7 @@ export async function askHeyKivi(userId: string, question: string, history: { ro
         break;
       }
       const tStep = Date.now();
-      const { result, step } = await runTool(fc.name, fc.args ?? {}, userId);
+      const { result, step } = await runTool(fc.name, fc.args ?? {}, userId, question);
       const ms = Date.now() - tStep;
       if (fc.name === 'recall' || fc.name === 'find_dictations') retrievalMs += ms;
       if (fc.name === 'draft_text') {
@@ -405,7 +415,12 @@ export async function askHeyKivi(userId: string, question: string, history: { ro
   };
 }
 
-async function runTool(name: string, args: any, userId: string): Promise<{ result: any; step: Omit<TraceStep, 'tool' | 'args' | 'ms'> }> {
+async function runTool(
+  name: string,
+  args: any,
+  userId: string,
+  spokenSoFar = ''
+): Promise<{ result: any; step: Omit<TraceStep, 'tool' | 'args' | 'ms'> }> {
   switch (name) {
     case 'recall': {
       // Context is not free: every memory handed to the model costs tokens, latency and
@@ -447,6 +462,7 @@ async function runTool(name: string, args: any, userId: string): Promise<{ resul
       const found = await searchDictations({
         userId, query: args.query, app: args.app ?? null, since: args.since ?? null,
         until: args.until ?? null, limit: Math.min(args.limit ?? 6, 12),
+        includePersonal: args.include_personal === true,
       });
       const withheld = (
         db()
@@ -476,10 +492,10 @@ async function runTool(name: string, args: any, userId: string): Promise<{ resul
     case 'open_dictation': {
       const d = db().prepare('SELECT * FROM dictations WHERE id = ? AND user_id = ?').get(args.dictation_id, userId) as any;
       if (!d) return { result: { error: 'no dictation with that id' }, step: { summary: `miss: ${args.dictation_id}` } };
-      if (d.sensitivity === 'personal') {
+      if (d.sensitivity === 'secret') {
         return {
-          result: { error: 'this dictation is personal, not working material, and Kivi does not use it' },
-          step: { summary: `withheld ${d.id}: classified personal at ingest` },
+          result: { error: 'this dictation contains a credential; Kivi will not repeat it back' },
+          step: { summary: `withheld ${d.id}: contains a credential` },
         };
       }
       const mem = db()
@@ -537,12 +553,25 @@ Never introduce a fact that is not in the sources.`,
       };
     }
     case 'remember': {
+      // Even a memory the person dictated on purpose keeps the words that produced it.
+      // "Every memory shows what it came from" has to hold for all of them, or the
+      // memory page has a class of rows a person cannot check.
+      const said = db()
+        .prepare(
+          `INSERT INTO dictations (id, user_id, spoken_at, app, context_label, style, raw_asr, formatted, metadata_json, sensitivity)
+           VALUES (?,?,?,?,?,?,?,?,?,'work')`
+        );
+      const saidId = newId('d');
+      said.run(
+        saidId, userId, new Date().toISOString(), 'hey kivi', 'asked Kivi to remember this',
+        'spoken', spokenSoFar, spokenSoFar, JSON.stringify({ source: 'hey_kivi_request' })
+      );
       const m = await createMemory(
         {
           userId, kind: args.kind, statement: args.statement, confidence: 0.98,
           source: 'user_stated', seenAt: new Date().toISOString(),
         },
-        [],
+        [{ dictationId: saidId, quote: spokenSoFar }],
         'the person asked Kivi to remember this during a Hey Kivi conversation',
         'user'
       );

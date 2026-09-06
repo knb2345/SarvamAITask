@@ -130,6 +130,14 @@ for (const c of cases) {
     }
   }
 
+  // Personal material may be found, but must never have become a memory.
+  if (c.expect_no_memory_citation && (result.citations?.memories ?? []).length > 0) {
+    failures.push(
+      `answered from memory (${result.citations.memories.map((m: any) => m.id).join(', ')}); ` +
+        'personal material may be retrieved from the dictation but must never be learned'
+    );
+  }
+
   // explicit "remember this"
   if (c.expect_memory_created) {
     const found = db()

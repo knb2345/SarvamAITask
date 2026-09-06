@@ -235,14 +235,25 @@ export type DictationSearchOpts = {
   since?: string | null;
   until?: string | null;
   limit?: number;
+  /** Include dictations classified personal. They are never learned from either way. */
+  includePersonal?: boolean;
 };
 
 export async function searchDictations(opts: DictationSearchOpts): Promise<ScoredDictation[]> {
   const limit = opts.limit ?? 10;
   const params: any[] = [opts.userId];
-  // Personal dictations are excluded from every Hey Kivi lookup. The person can still
-  // read them in their own history; Kivi just does not use them.
-  let where = `user_id = ? AND (sensitivity IS NULL OR sensitivity != 'personal')`;
+  /*
+   * Not learning from something and refusing to help someone find their own words are
+   * different decisions, and binding them together was paternalism rather than privacy:
+   * these are the person's own dictations, sitting two clicks away in their history.
+   * So personal material is never promoted to memory, but it can be retrieved when the
+   * person actually asks for it. A credential is the exception — reciting it back has
+   * no upside that could outweigh leaking it.
+   */
+  let where =
+    `user_id = ? AND (sensitivity IS NULL OR sensitivity NOT IN ('secret'` +
+    (opts.includePersonal ? '' : `, 'personal'`) +
+    `))`;
   if (opts.app) {
     where += ' AND lower(app) = lower(?)';
     params.push(opts.app);

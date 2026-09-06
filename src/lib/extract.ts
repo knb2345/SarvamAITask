@@ -156,7 +156,7 @@ const BATCH_SCHEMA = {
 } as const;
 
 export type ExtractionResult = {
-  sensitivity: 'work' | 'personal';
+  sensitivity: 'work' | 'personal' | 'secret';
   sensitivity_reason?: string;
   episode: { summary: string; topics: string[]; subject?: string };
   memories: Candidate[];
@@ -249,10 +249,14 @@ export async function extractBatch(
   for (const r of value.results ?? []) {
     const d = byId.get(r.dictation_id);
     if (!d) continue;
+    // Two different refusals, and they are not the same strength.
+    //   personal - never learned from, but still the person's own words to find.
+    //   secret   - never learned from and never retrieved, because repeating a
+    //              credential back has no upside that could outweigh leaking it.
     const secret = carriesCredential(`${d.raw_asr} ${d.formatted}`);
     const personal = r.sensitivity === 'personal' || secret !== null;
     out.set(d.id, {
-      sensitivity: personal ? 'personal' : 'work',
+      sensitivity: secret ? 'secret' : personal ? 'personal' : 'work',
       sensitivity_reason: secret
         ? `${secret}; credentials are never learned from, whatever they are for`
         : r.sensitivity_reason,
