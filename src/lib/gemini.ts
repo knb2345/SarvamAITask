@@ -178,7 +178,21 @@ export function generationProvider(setting: string = config.llmProvider): 'gemin
 
 export async function generate(opts: GenerateOpts): Promise<{ parts: GenPart[]; text: string; usage: Usage }> {
   const provider = opts.provider ?? generationProvider();
-  if (provider === 'groq') return groqGenerate(opts);
+  if (provider === 'groq') {
+    try {
+      return await groqGenerate(opts);
+    } catch (e) {
+      // One backend being unavailable should not be the end of the request. Whichever
+      // model answers, the memory, the retrieval and the citation checks are the same.
+      if (config.geminiKeys.length === 0) throw e;
+      console.warn(`  [llm] groq failed (${String((e as Error)?.message ?? e).slice(0, 90)}); retrying on gemini`);
+      return generateWithGemini({ ...opts, model: undefined });
+    }
+  }
+  return generateWithGemini(opts);
+}
+
+async function generateWithGemini(opts: GenerateOpts): Promise<{ parts: GenPart[]; text: string; usage: Usage }> {
   if (config.geminiKeys.length === 0) throw new Error('GEMINI_API_KEY is not set. Copy .env.example to .env and add your key.');
   const model = opts.model || config.chatModel;
   const body: any = {

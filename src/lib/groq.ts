@@ -116,10 +116,22 @@ async function post(url: string, body: unknown, tries = 5, budgetMs = 180_000): 
       if (!res.ok) {
         const text = await res.text();
         // A malformed tool call is the model's output being wrong, not the request being
-        // wrong: the same prompt usually succeeds on the next attempt. Retry those, and
-        // only those, among the 4xx family.
-        const modelMisbehaved = /parse tool call|tool call validation|json_validate|failed_generation/i.test(text);
-        throw Object.assign(new Error(`http ${res.status}: ${text.slice(0, 300)}`), { fatal: !modelMisbehaved });
+        // wrong. Retrying helps only sometimes — at a low temperature the model tends to
+        // produce the same broken output again — but the answer it was trying to give is
+        // in the error body, so carry it along for the caller to salvage.
+        const modelMisbehaved = /parse tool call|tool call validation|json_validate|failed_generation|tool_use_failed/i.test(text);
+        let failedGeneration: string | undefined;
+        if (modelMisbehaved) {
+          try {
+            failedGeneration = JSON.parse(text)?.error?.failed_generation;
+          } catch {
+            /* not JSON; nothing to salvage */
+          }
+        }
+        throw Object.assign(new Error(`http ${res.status}: ${text.slice(0, 300)}`), {
+          fatal: !modelMisbehaved,
+          failedGeneration,
+        });
       }
       return await res.json();
     } catch (e: any) {
@@ -163,8 +175,21 @@ export async function groqGenerate(opts: GenerateOpts): Promise<{ parts: GenPart
   let json: any;
   try {
     json = await post(`${BASE}/chat/completions`, body);
-  } catch (e) {
+  } catch (e: any) {
     logModelCall(opts.purpose, { inputTokens: 0, outputTokens: 0, latencyMs: Date.now() - t0, costUsd: 0, model }, false, opts.runId);
+
+    // The model had an answer and mangled the envelope around it. Throwing that away and
+    // telling the person "I could not reach the model" would be a lie about what
+    // happened and a worse experience than handing back what it actually said — the
+    // caller already knows how to treat loose text as an answer and recover its ids.
+    const salvaged = salvagePlainText(e?.failedGeneration);
+    if (salvaged) {
+      return {
+        parts: [{ text: salvaged }],
+        text: salvaged,
+        usage: { inputTokens: 0, outputTokens: 0, latencyMs: Date.now() - t0, costUsd: 0, model },
+      };
+    }
     throw e;
   }
 
@@ -188,6 +213,31 @@ export async function groqGenerate(opts: GenerateOpts): Promise<{ parts: GenPart
     parts.push({ functionCall: { name: call.function?.name, args, id: call.id } });
   }
   return { parts, text: message.content ?? '', usage };
+}
+
+/**
+ * Pull the prose out of a tool call the model failed to format.
+ *
+ * A failed generation looks like `{"name": "respond", "arguments": <unquoted prose>}`:
+ * the words are fine, the JSON is not. Anything that still parses as an argument object
+ * is used directly; otherwise the readable remainder is returned.
+ */
+function salvagePlainText(failed: string | undefined): string | null {
+  if (!failed || typeof failed !== 'string') return null;
+  try {
+    const parsed = JSON.parse(failed);
+    const args = parsed?.arguments ?? parsed;
+    if (typeof args === 'string') return args.trim() || null;
+    if (args && typeof args.answer === 'string') return args.answer.trim() || null;
+  } catch {
+    /* it did not parse, which is the whole problem */
+  }
+  const after = failed.replace(/^[\s\S]*?"arguments"\s*:\s*/, '');
+  const text = after
+    .replace(/^["'{]+|["'}]+$/g, '')
+    .replace(/\\n/g, String.fromCharCode(10))
+    .trim();
+  return text.length > 12 ? text : null;
 }
 
 /**
