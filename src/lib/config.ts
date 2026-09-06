@@ -37,7 +37,13 @@ export const config = {
    * one, and either can be pinned explicitly.
    */
   extractProvider: (process.env.KIVI_EXTRACT_PROVIDER || 'gemini').trim() as 'auto' | 'gemini' | 'groq',
-  chatProvider: (process.env.KIVI_CHAT_PROVIDER || 'auto').trim() as 'auto' | 'gemini' | 'groq',
+  /**
+   * Gemini by default for both. Groq is faster per call and its client is kept — the
+   * fallback between them is real and has rescued live requests — but the model behind
+   * its free tier emits malformed tool calls often enough that it is the wrong default
+   * for a product whose whole claim is that it does not speak carelessly.
+   */
+  chatProvider: (process.env.KIVI_CHAT_PROVIDER || 'gemini').trim() as 'auto' | 'gemini' | 'groq',
   /**
    * Optional extra keys, comma separated. When one key's daily quota is exhausted the
    * client moves to the next rather than retrying a wall it cannot get past. One key is

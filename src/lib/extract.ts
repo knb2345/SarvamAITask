@@ -62,8 +62,12 @@ private life rather than their work:
     account number. This one does not depend on whose life it is about — a STAGING
     password dictated into a work note is still a secret, and work context does not
     make it safe to keep. If the dictation carries a credential, it is personal.
-  - a named colleague's private life, health, pay or their leaving — as opposed to their
-    role, their work and what they are responsible for, which are working facts.
+  - anything durable about another named person beyond their working role. Their job,
+    what they own and what they have committed to are working facts and are kept. Their
+    health, pay, family, performance, and whether they are leaving are not — that person
+    never chose to be in this system, and a claim about them outlives the conversation it
+    came from. "Rahul owns the ledger migration" is kept. "Rahul is resigning on the 30th"
+    is not, however openly it was said.
 
 The test is whose life it is about, not which words appear. "Apex Retail does fifty lakhs
 a month" is a business figure and is kept. "My hike was fifteen percent" is the person's

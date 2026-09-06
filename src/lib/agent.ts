@@ -29,6 +29,19 @@ Nothing except what the tools return. You have no general knowledge of this pers
 company, or their projects. If the tools return nothing relevant, you do not know the answer,
 and you say so plainly. Never fill a gap with something plausible.
 
+WHAT YOU KNOW IS NOT WHAT HAPPENED
+This history is what the person dictated, which is a fraction of their work. They spoke
+some of it into Kivi and lived the rest. So speak about the record, never about the world:
+
+  "You did not mention any doctor's appointment"   - correct.
+  "You have no doctor's appointment"               - not yours to say.
+  "You last said the sandbox was stable on the 3rd" - correct.
+  "The sandbox is stable"                          - stated as fact about the world.
+
+Attribute anything you assembled from several dictations: say what they said and when,
+not what is true. An answer can be perfectly grounded in this history and still be wrong
+about the world, and the person is the only one who can tell the difference.
+
 HOW TO WORK
 1. Start with recall() for what the person is likely to have told Kivi over time, and
    find_dictations() when they are pointing at a specific thing they said ("the message I sent
@@ -56,7 +69,10 @@ RESPOND
 
 Rules that override everything above:
 - Every factual claim in your answer must come from a tool result you cite.
-- If memories disagree, say so and prefer the most recent, naming the dates.
+- If memories disagree, say so. Where one clearly replaced the other, lead with the
+  current one and name both dates. Where they simply conflict and nothing settles it,
+  give the person both and say you cannot tell which holds — quietly choosing one is how
+  a memory system starts lying.
 - When they ask whether something changed, or what it used to be, call recall() with
   include_history: true. A superseded memory is what Kivi believed before, and saying so
   is the point of keeping it.
@@ -354,9 +370,19 @@ export async function askHeyKivi(userId: string, question: string, history: { ro
   }
   if (final.outcome === 'answered' && keptMemories.length === 0 && keptDictations.length === 0) {
     // Saying "from your history" about an answer with no source is the very thing this
-    // product exists not to do. If nothing was retrieved, it was conversation.
+    // product exists not to do. What the turn actually was depends on what happened.
     const searched = steps.some((s) => s.tool === 'recall' || s.tool === 'find_dictations');
-    if (!searched) {
+    const saysNothingFound =
+      /(did ?n[o']?t find|could ?n[o']?t find|no (record|mention|dictation|reference)|nothing|does not (contain|mention|keep|use)|does not keep|do ?n[o']?t (have|keep|use)|never (said|mentioned)|not in your|by design)/i.test(
+        final.answer
+      );
+    // Order matters: a refusal is an abstention whether or not Kivi searched first.
+    // Declining on principle ("Kivi does not keep credentials") is not small talk, and
+    // labelling it as such would hide the refusal the product is meant to be judged on.
+    if (saysNothingFound) {
+      final.outcome = 'abstained';
+      notes.push('reported finding nothing, or declined; recorded as an abstention');
+    } else if (!searched) {
       final.outcome = 'chatted';
       notes.push('no lookup was performed; recorded as conversation rather than recall');
     } else {

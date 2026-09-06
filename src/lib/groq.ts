@@ -182,11 +182,13 @@ export async function groqGenerate(opts: GenerateOpts): Promise<{ parts: GenPart
     // telling the person "I could not reach the model" would be a lie about what
     // happened and a worse experience than handing back what it actually said — the
     // caller already knows how to treat loose text as an answer and recover its ids.
-    const salvaged = salvagePlainText(e?.failedGeneration);
+    const known = new Set((tools ?? []).map((t: any) => t.function?.name).filter(Boolean));
+    const salvaged = salvageParts(e?.failedGeneration, known);
     if (salvaged) {
+      const text = salvaged.filter((p) => p.text).map((p) => p.text).join('');
       return {
-        parts: [{ text: salvaged }],
-        text: salvaged,
+        parts: salvaged,
+        text,
         usage: { inputTokens: 0, outputTokens: 0, latencyMs: Date.now() - t0, costUsd: 0, model },
       };
     }
@@ -216,28 +218,59 @@ export async function groqGenerate(opts: GenerateOpts): Promise<{ parts: GenPart
 }
 
 /**
- * Pull the prose out of a tool call the model failed to format.
+ * Recover a tool call the model failed to format.
  *
- * A failed generation looks like `{"name": "respond", "arguments": <unquoted prose>}`:
- * the words are fine, the JSON is not. Anything that still parses as an argument object
- * is used directly; otherwise the readable remainder is returned.
+ * A failed generation looks like `{"name": "respond", "arguments": <not quite JSON>}`.
+ * The intent is usually recoverable, and throwing it away means telling the person the
+ * model could not be reached when in fact it answered.
+ *
+ * What must not happen is presenting a half-formed call as if it were speech: an early
+ * version of this salvaged the arguments of a `find_dictations` call and showed the
+ * person `"query": "staging password", "limit": 10` as Kivi's answer. So a recovered
+ * call is replayed as a call, and only `respond` can become text.
  */
-function salvagePlainText(failed: string | undefined): string | null {
+function salvageParts(failed: string | undefined, knownTools: Set<string>): GenPart[] | null {
   if (!failed || typeof failed !== 'string') return null;
-  try {
-    const parsed = JSON.parse(failed);
-    const args = parsed?.arguments ?? parsed;
-    if (typeof args === 'string') return args.trim() || null;
-    if (args && typeof args.answer === 'string') return args.answer.trim() || null;
-  } catch {
-    /* it did not parse, which is the whole problem */
+
+  const nameMatch = /"name"\s*:\s*"([^"]+)"/.exec(failed);
+  const name = nameMatch?.[1];
+  const argsText = failed.replace(/^[\s\S]*?"arguments"\s*:\s*/, '').trim();
+
+  // First choice: rebuild the call so the conversation carries on as intended.
+  if (name && knownTools.has(name)) {
+    const args = parseLoosely(argsText);
+    if (args && typeof args === 'object') {
+      return [{ functionCall: { name, args, id: `salvaged_${name}` } }];
+    }
   }
-  const after = failed.replace(/^[\s\S]*?"arguments"\s*:\s*/, '');
-  const text = after
-    .replace(/^["'{]+|["'}]+$/g, '')
-    .replace(/\\n/g, String.fromCharCode(10))
-    .trim();
-  return text.length > 12 ? text : null;
+
+  // Second choice: the model was trying to speak, and only mangled the envelope.
+  const speaking = name === 'respond' || name === 'response' || !name;
+  if (!speaking) return null;
+  const args = parseLoosely(argsText);
+  const answer = typeof args === 'string' ? args : args?.answer;
+  if (typeof answer === 'string' && answer.trim().length > 12) {
+    return [{ text: answer.trim() }];
+  }
+  return null;
+}
+
+/** JSON first; failing that, the object fragment a truncated generation leaves behind. */
+function parseLoosely(text: string): any {
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    /* keep trying */
+  }
+  for (const candidate of [text.replace(/\}\s*$/, '') + '}', '{' + text, '{' + text + '}']) {
+    try {
+      return JSON.parse(candidate);
+    } catch {
+      /* not this one either */
+    }
+  }
+  return null;
 }
 
 /**

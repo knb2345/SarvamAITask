@@ -1,72 +1,72 @@
 # Product vision
 
-*578 words.*
+*561 words.*
 
 ## What I noticed
 
-Products that added memory recently try to learn *the person* — tone, interests,
-temperament — so the assistant feels closer to you. Kivi is in a rarer position. It does
-not need to infer who you are, because it already holds something more useful: the work
-you expressed through it, and when and where each piece of it went.
+Assistants that added memory learn *the person* — tone, interests, temperament — to feel
+closer to you. ChatGPT will tell you it noticed you prefer concise answers.
 
-That is narrower than it sounds: Kivi knows what passed through Kivi, and nothing else.
-But a chat assistant only knows what you asked *it*. Kivi saw what you told other people
-— the deadline you gave your team, the promise you made a partner.
+Kivi need infer nothing, because it holds something rarer. A chat assistant knows what
+you asked *it*. Kivi knows what you told **everyone else**: the deadline you gave your
+team, the promise you made a partner. That asymmetry — a record of outgoing work, not of
+conversations with a bot — is the opportunity, and why an inferred profile is the wrong
+thing to build here.
 
-## Two different things, kept apart
+## What it becomes
 
-**Source history** is every dictation, stored whole and searchable. Nothing is summarised
-away; it stays yours to search.
+The place you ask instead of searching six apps. Everything you dictate scatters into
+Slack, Gmail, Linear, a doc you will not find again; Kivi watched all of it leave.
 
-**Semantic memory** is the much smaller set of durable statements promoted out of that
-history because they will still matter weeks later. Kivi acts on and repeats these, so
-they are held to a higher standard.
+As Hey Kivi grows into the interface for the whole product, memory becomes what makes
+tool use worth having: knowing which document, which thread, which person, without being
+told each time. Dictation becomes a tool inside that interface — and stays deterministic
+even when invoked through it.
 
-Between them sits a thin index — one line per dictation, saying what it was and where it
-went — so "the update I sent around 5pm" is findable without its contents becoming a
-claim. That separation is why everything stays findable while most is never learned.
+## What is kept, and what is promoted
 
-## Where the value is
+**Source history** is every dictation, whole and searchable. Nothing is summarised away.
 
-Three things, and I would cut anything that is not one of them:
+**Semantic memory** is the small set promoted out of it, by one test: *would you
+otherwise have to look this up again, or does it constrain future work?* Dates, owners,
+decisions, numbers, and preferences you stated as rules pass. The content of a single
+message does not — it stays findable in source history without becoming a claim.
 
-1. **Recovering what you said**, by time, app and subject.
-2. **Assembling something you never said in one place.** An incident becomes a story
-   across three dictations and three weeks; no single message contains it.
-3. **Producing work that sounds like you**, because you already said how you want things
-   written.
+Preferences are not Styles. A Style is configured in advance and shapes dictation. These
+are things you said in passing and never set up, and they only ever reach drafting inside
+Hey Kivi.
 
-## Inference is not guessing
+## What Kivi must never assume
 
-Kivi is expected to combine sources — that second use case *is* inference, and refusing
-it would make the product pointless. The line is grounded synthesis versus unsupported
-assertion: every claim traces to dictations you actually made, and one claim may rest on
-several. What Kivi must not do is turn an assumption into a fact.
+**That the record is the world.** This is what you dictated, not what happened. So Kivi
+says "you said the sandbox was stable on the 3rd", never "the sandbox is stable". An
+answer can be perfectly grounded in your history and wrong about your work.
 
-Nor may it treat everything said as a statement. "We are moving the launch to Friday" is
-a decision. "Should we move it to Friday?" is a question, and recording it as a decision
-is worse than missing it, because it will later displace something true.
+**That everything said is a statement.** "We are moving the launch to Friday" is a
+decision. "Should we move it?" is not, and recording it as one is worse than missing it,
+because it will later displace something true.
+
+**That the newest claim wins by default.** A contradiction is adjudicated, the replaced
+version is kept as history, and where nothing settles it Kivi shows both rather than
+quietly choosing.
 
 ## What is never learned
 
-Your health, your own money, your family, your politics — and any credential, whatever it
-is for: a staging password dictated into a work note is still a secret. The test is whose
-life it concerns, not which words appear. A company's revenue is a working fact; your
-appraisal is not.
+Your health, your own money, your family, your politics. Any credential, whatever it is
+for — a staging password in a work note is still a secret. And anything durable about
+another person beyond their working role: Rahul owning the migration is kept; Rahul
+resigning is not. He never chose to be in this system.
 
 ## Why anyone would trust it
 
-Because it can be checked. Every promoted memory shows the words that produced it. Every
-answer shows what it was built from, and a citation that does not support what was said
-is dropped rather than displayed. When a fact changes, the old one is kept as history so
-Kivi can say what it used to believe. When your history has no answer, Kivi says so —
-that is a correct outcome, not a failure.
-
-You will not read all of it, and should not have to. You need to see what matters, check
-anything specific, and delete what is wrong in one tap.
+Every memory shows the words that made it. Every answer shows what it was built from, and
+a citation that does not support the claim is dropped rather than displayed. When your
+history has no answer, Kivi says so. You will not read all of it and should not have to —
+you need to check anything specific and delete what is wrong in one tap.
 
 ## What this rules out
 
-Dictation stays untouched. It is a tool used fifty times a day and it must be
-predictable: the same sentence should come out the same way next month. Memory earns its
-place in Hey Kivi, where you asked a question and can see the reasoning.
+No inferred profile of you. No proactive surfacing — Kivi speaks when asked. No memory
+that makes Kivi *act* rather than answer or draft. No confidence scores paraded as
+numbers. And nothing that reaches into dictation, which must return the same sentence
+next month as it does today.
