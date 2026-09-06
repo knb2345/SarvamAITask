@@ -97,6 +97,7 @@ Open **http://localhost:3000**.
 | Page | What it is |
 | --- | --- |
 | `/` | **Hey Kivi** — the product. Ask questions of your own dictation history |
+| `/dictate` | **Dictation** — the half memory never touches. Speak (Chrome/Edge) or type what you would have said, and watch what Kivi does and does not learn from it |
 | `/memory` | **What Kivi knows** — every memory, its evidence, edit and forget controls |
 | `/history` | **Dictation history** — the raw corpus, and what was kept or ignored from each record |
 | `/inspect` | **Why** — the engineer's surface: retrieval scores, tool traces, model cost, extraction decisions |
@@ -121,6 +122,13 @@ On `/` (the starters on the empty page are the same list):
    then look at `/memory`, filtered to preferences.
 8. On any answer, click **"how did Kivi get here?"** for retrieval scores and cost; on any
    citation chip, click through to the exact words that produced it.
+9. On `/dictate`, dictate *"um so quick update the h d f c sandbox is stable now and davika
+   ships the new screens on thursday"*. Kivi holds a memory that the colleague is **Devika**
+   and still writes **Davika**, because memory is not allowed to reach into dictation and
+   correcting a misheard name is phonetic memory's job. Click **"see the instructions used"**
+   to confirm no memory reached the prompt, then read what was learned from it afterwards.
+   Speech recognition uses the browser's own (Chrome or Edge); elsewhere type it instead —
+   the path after that is identical.
 
 ## 8. Run the candidate evaluation
 

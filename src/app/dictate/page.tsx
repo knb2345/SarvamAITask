@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
+import Microphone from './Microphone';
 
 const APPS = ['slack', 'gmail', 'linear', 'notion', 'notes', 'whatsapp', 'docs'];
 const STYLES = ['message', 'email', 'ticket', 'notes', 'doc'];
@@ -18,6 +19,10 @@ export default function DictatePage() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [showPrompt, setShowPrompt] = useState(false);
+
+  // The recogniser streams a running transcript; it replaces the box rather than
+  // appending, so what you see is exactly what it currently believes you said.
+  const onTranscript = useCallback((text: string) => setSpoken(text), []);
 
   async function dictate() {
     if (!spoken.trim() || busy) return;
@@ -40,8 +45,9 @@ export default function DictatePage() {
       <h1>Dictation</h1>
       <p className="lede">
         The half of Kivi that memory never touches. Speech becomes text using the style you chose
-        and nothing else — so the same sentence comes out the same way next month. What you dictate
-        does feed memory afterwards; memory never feeds this.
+        and nothing else, so the same sentence comes out the same way next month. What you dictate
+        does feed memory afterwards; memory never feeds this. Speak into it, or type what you
+        would have said.
       </p>
 
       <div className="filters">
@@ -70,6 +76,8 @@ export default function DictatePage() {
           {busy ? '…' : '↑'}
         </button>
       </div>
+
+      <Microphone onTranscript={onTranscript} disabled={busy} />
 
       {!result && (
         <div className="starters">

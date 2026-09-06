@@ -15,13 +15,20 @@ is worth keeping from 500 dictations, and the evidence that both behave.
 
 ## The product
 
-Four surfaces. The first three are for a normal person; the fourth is for us.
+Five surfaces. The first four are for a normal person; the last is for us.
 
 **Hey Kivi (`/`)** — you ask, it answers from your own words. Every answer carries the
 memories and dictations it was built from as chips you can open, and a plain "how did Kivi
 get here?" link. When your history does not contain the answer, it says so instead of
 guessing, and the interface labels that turn *not in your history* rather than dressing it
 up as an answer.
+
+**Dictation (`/dictate`)** — the half memory never touches. Speech becomes text from the
+chosen style and nothing else; the endpoint returns the exact instructions it used so the
+interface can show that no memory reached them, and the dictation is then read by the
+memory writer so you can watch what was learned, which is usually nothing. Speech
+recognition is the browser's own where available, and typing is the same path otherwise —
+the brief does not ask for speech recognition, and nothing downstream depends on it.
 
 **What Kivi knows (`/memory`)** — the memory itself, written as sentences a person can read.
 Each card shows how many times you said it, since when, and — one click away — the exact
