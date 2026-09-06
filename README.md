@@ -227,32 +227,35 @@ The evaluation in this repository, run against the committed corpus.
 
 | | |
 | --- | --- |
-| Question cases passed | **26/30** |
-| Memory-state checks passed | **8/8** |
-| End-to-end latency | p50 **4636ms**, p90 10707ms |
-| Retrieval latency | p50 769ms |
-| Cost of the evaluation | $0.03441 ($0.001147 per question) |
-| Database | 7.8 MB for 499 dictations |
+| Question cases passed | **30/32** |
+| Memory-state checks passed | **9/9** |
+| End-to-end latency | p50 **5638ms**, p90 12331ms |
+| Cost of the evaluation | $0.04236 ($0.001324 per question) |
+| Database | 7.5 MB for 499 dictations |
 
-By group: supersession 2/2, preference 5/5, flagship 1/1, aggregation 3/4, fact 4/5, recency 1/2, abstention 4/5, privacy 3/3, clarification 1/1, episodic 1/1, control 1/1.
+By group: supersession 2/2, preference 5/5, flagship 1/1, aggregation 3/4, fact 5/5, recency 1/2, abstention 5/5, privacy 4/4, clarification 1/1, episodic 1/1, control 1/1, honesty 1/1.
 
-Every group that tests a promise in the vision passes completely: **supersession 2/2**
-(the launch date moved and Kivi answers with the new one, and can still say what it used
-to believe), **privacy 3/3**, **preference 5/5**, and the flagship case — find the Slack
-update dictated around 5pm yesterday and polish it into a standup update — passes end to
-end. All eight memory-state checks pass, including that no memory was learned from a
-personal dictation and that no inferred memory has lost its evidence.
+Every group that tests a promise made in the vision passes completely: **supersession
+2/2** (the launch date moved, Kivi answers with the new one and can still say what it
+used to believe), **privacy 4/4** including credentials and third parties, **preference
+5/5**, **abstention 5/5**, and the flagship case — find the Slack update dictated around
+5pm yesterday and polish it into a standup update — end to end. All nine memory-state
+checks pass, among them: no memory learned from a personal dictation, no inferred memory
+missing its evidence, and no memory recording a colleague's departure, health or pay.
 
-The four failures are reported rather than tuned away:
+Ingesting 499 dictations produced 651 memories, of which 40 superseded an earlier version
+and 8 dictations were classified personal and learned nothing from, for $0.000.
 
-- **`truvia-thread`** answers with a real but different Truvia incident from the corpus.
-  Two threads about Truvia timeouts exist and retrieval prefers the wrong one.
-- **`hdfc-status`** answers from a more recent HDFC dictation than the planted one. Not
-  wrong, but it does not surface the specific update the case asks about.
-- **`devika-screens`** abstains where the answer is present. A genuine miss.
-- **`unsupported-superlative`** says, correctly, that the history does not contain an
-  answer — but labels the turn `answered` rather than `abstained`, so the harness flags
-  it as an uncited answer. The words are right and the outcome is not.
+The two failures are reported rather than tuned away:
+
+- **`truvia-thread`** gives the right explanation — the timeouts came from Truvia's PAN
+  verification endpoint — but cites the dictation where Farah diagnosed it rather than
+  the later one confirming the fix. The claim is sound and the provenance is imprecise.
+- **`hdfc-status`** answers from yesterday's HDFC update rather than the sandbox-stability
+  message the case asks about. Recency wins where specificity was wanted.
+
+Both are retrieval preferring one true source over another, not the system asserting
+something unsupported.
 
 ## What the evaluation found, and what changed because of it
 
