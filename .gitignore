@@ -10,3 +10,9 @@ ingest.log
 eval.log
 dev.log
 eval/results/results.partial.json
+h.log
+pc.log
+pv.log
+pv2.log
+seed.log
+reindex.log
