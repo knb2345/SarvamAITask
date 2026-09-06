@@ -153,6 +153,18 @@ npx tsx scripts/eval.ts --only=abstention
 Groups: `supersession`, `preference`, `flagship`, `aggregation`, `fact`, `recency`,
 `abstention`, `privacy`, `clarification`, `episodic`, `control`.
 
+## 8b. Check the machinery without spending a model call
+
+```bash
+npm test
+```
+
+24 assertions over the parts that must not fail quietly and need no model: the import
+normaliser (field aliases, nested transcript objects, epoch-seconds timestamps, preserved
+unknown fields), the credential screen, the prefilter, FTS query building, and the local
+embedder. Run this first if an import behaves oddly — it is instant and it isolates
+whether the problem is the data or the pipeline.
+
 ## 9. Importing another corpus
 
 Records may be **JSONL** (one object per line) or a **JSON array**. Field names:
@@ -171,9 +183,22 @@ Records may be **JSONL** (one object per line) or a **JSON array**. Field names:
 }
 ```
 
-- `raw_asr` accepts the aliases `asr` or `text`; `formatted` accepts `formatted_output` or
-  `text`; `spoken_at` accepts `timestamp`. Only `raw_asr`/`formatted` and a timestamp are
-  required — everything else is optional.
+Only the text and a timestamp are genuinely required; everything else is optional. The
+importer accepts the common variants rather than demanding exact names:
+
+| field | also accepted |
+| --- | --- |
+| `raw_asr` | `asr`, `raw_text`, `transcript`, `raw`, `text` |
+| `formatted` | `formatted_output`, `llm_output`, `output`, `final_text`, `text` |
+| `spoken_at` | `timestamp`, `created_at`, `time`, `date`, `dictated_at` |
+| `app` | `application`, `destination`, `target_app`, `app_name`, `client` |
+| `context_label` | `context`, `window`, `window_title`, `thread`, `title` |
+| `style` | `dictation_style`, `mode` |
+| `duration_ms` | `duration`, `length_ms` |
+
+Timestamps may be ISO 8601, `YYYY-MM-DD HH:MM:SS`, or a Unix epoch in seconds or
+milliseconds. A text field arriving as `{"text": "..."}` is unwrapped rather than
+stringified. A record with no id is numbered by position.
 - **Any unrecognised top-level field is preserved verbatim** in `metadata_json`, so your log
   metadata does not need to be reshaped.
 

@@ -15,7 +15,8 @@
     "eval": "tsx scripts/eval.ts",
     "setup": "npm run db:reset && npm run seed",
     "db:summary": "tsx scripts/summary.ts",
-    "reindex": "tsx scripts/reindex.ts"
+    "reindex": "tsx scripts/reindex.ts",
+    "test": "tsx scripts/test.ts"
   },
   "dependencies": {
     "better-sqlite3": "^11.10.0",

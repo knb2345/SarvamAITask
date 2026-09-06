@@ -30,44 +30,87 @@ export type RawRecord = {
 };
 
 /**
- * Import format tolerance: the corpus we ship uses the canonical field names, but an
- * external corpus is allowed to use the common aliases below. Anything we do not
- * recognise is preserved verbatim in metadata_json.
+ * Import tolerance.
+ *
+ * The corpus we ship uses the canonical field names, but the reviewing agent will be
+ * translating a different corpus into this format and will not be here to fix a
+ * mismatch. Every shape below was produced by deliberately feeding this function
+ * plausible-but-wrong input, and each one used to fail silently rather than loudly:
+ * a nested `{asr: {text}}` became the string "[object Object]", a Unix timestamp in
+ * seconds became 1970, and an `application` field left every dictation with no app.
+ *
+ * Anything unrecognised is preserved verbatim in metadata_json rather than dropped.
  */
+
+/** Accepts a string, or the common wrappers around one. */
+function asText(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (value && typeof value === 'object') {
+    const o = value as Record<string, unknown>;
+    for (const key of ['text', 'transcript', 'content', 'value', 'raw']) {
+      if (typeof o[key] === 'string') return o[key] as string;
+    }
+  }
+  return '';
+}
+
+/** ISO strings, epoch seconds, epoch milliseconds, and "YYYY-MM-DD HH:MM:SS". */
+function asTimestamp(value: unknown): string {
+  if (typeof value === 'number' || /^\d{9,13}$/.test(String(value ?? ''))) {
+    const n = Number(value);
+    // Seconds and milliseconds are both common; ten digits is seconds until ~2286.
+    return new Date(n < 1e11 ? n * 1000 : n).toISOString();
+  }
+  const text = String(value ?? '').trim();
+  if (!text) return new Date().toISOString();
+  const parsed = Date.parse(text.includes('T') || !text.includes(' ') ? text : text.replace(' ', 'T') + 'Z');
+  return Number.isNaN(parsed) ? new Date().toISOString() : new Date(parsed).toISOString();
+}
+
+const FIELD_ALIASES = {
+  raw: ['raw_asr', 'asr', 'raw_text', 'transcript', 'raw', 'text'],
+  formatted: ['formatted', 'formatted_output', 'llm_output', 'output', 'final_text', 'text'],
+  when: ['spoken_at', 'timestamp', 'created_at', 'time', 'date', 'dictated_at'],
+  app: ['app', 'application', 'destination', 'target_app', 'app_name', 'client'],
+  context: ['context_label', 'context', 'window', 'window_title', 'thread', 'title'],
+  style: ['style', 'dictation_style', 'mode'],
+  duration: ['duration_ms', 'duration', 'length_ms'],
+} as const;
+
+function pick(r: RawRecord, keys: readonly string[]): unknown {
+  for (const k of keys) if (r[k] !== undefined && r[k] !== null && r[k] !== '') return r[k];
+  return undefined;
+}
+
 export function normaliseRecord(r: RawRecord, userId: string, index: number): Dictation {
-  const raw = (r.raw_asr ?? r.asr ?? r.text ?? '') as string;
-  const formatted = (r.formatted ?? r.formatted_output ?? r.text ?? raw) as string;
-  const spokenAt = new Date((r.spoken_at ?? r.timestamp ?? new Date().toISOString()) as string).toISOString();
-  const known = new Set([
-    'id', 'spoken_at', 'timestamp', 'app', 'context_label', 'style', 'duration_ms',
-    'raw_asr', 'asr', 'formatted', 'formatted_output', 'text', 'metadata',
+  const raw = asText(pick(r, FIELD_ALIASES.raw));
+  const formatted = asText(pick(r, FIELD_ALIASES.formatted)) || raw;
+  const spokenAt = asTimestamp(pick(r, FIELD_ALIASES.when));
+  const duration = Number(pick(r, FIELD_ALIASES.duration));
+
+  const known = new Set<string>([
+    ...Object.values(FIELD_ALIASES).flat(),
+    'id',
+    'metadata',
   ]);
-  const extra: Record<string, unknown> = { ...(r.metadata ?? {}) };
+  const extra: Record<string, unknown> = { ...((r.metadata as Record<string, unknown>) ?? {}) };
   for (const [k, v] of Object.entries(r)) if (!known.has(k)) extra[k] = v;
 
   return {
-    id: (r.id as string) || `d_${String(index).padStart(5, '0')}`,
+    id: String(r.id ?? `d_${String(index + 1).padStart(5, '0')}`),
     user_id: userId,
     spoken_at: spokenAt,
-    app: (r.app as string) ?? null,
-    context_label: (r.context_label as string) ?? null,
-    style: (r.style as string) ?? null,
-    duration_ms: (r.duration_ms as number) ?? null,
+    app: (asText(pick(r, FIELD_ALIASES.app)) || null) as string | null,
+    context_label: (asText(pick(r, FIELD_ALIASES.context)) || null) as string | null,
+    style: (asText(pick(r, FIELD_ALIASES.style)) || null) as string | null,
+    duration_ms: Number.isFinite(duration) && duration > 0 ? Math.round(duration) : null,
     raw_asr: raw,
     formatted,
     metadata_json: JSON.stringify(extra),
   };
 }
 
-/**
- * Upsert, never INSERT OR REPLACE.
- *
- * REPLACE deletes the existing row before inserting the new one, and every table that
- * references a dictation cascades on delete — so re-running the importer over a corpus
- * it had already read silently destroyed the provenance of every memory learned from it,
- * along with the record of what had been refused. A memory that cannot show the sentence
- * behind it is exactly what this product promises never to keep.
- */
 export function insertDictation(d: Dictation) {
   db()
     .prepare(
