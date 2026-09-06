@@ -221,6 +221,39 @@ the part of the evaluation that keeps the rest honest.
 
 Results, including the failures, are in [`eval/results/results.md`](eval/results/results.md).
 
+## Results
+
+The evaluation in this repository, run against the committed corpus.
+
+| | |
+| --- | --- |
+| Question cases passed | **26/30** |
+| Memory-state checks passed | **8/8** |
+| End-to-end latency | p50 **4636ms**, p90 10707ms |
+| Retrieval latency | p50 769ms |
+| Cost of the evaluation | $0.03441 ($0.001147 per question) |
+| Database | 7.8 MB for 499 dictations |
+
+By group: supersession 2/2, preference 5/5, flagship 1/1, aggregation 3/4, fact 4/5, recency 1/2, abstention 4/5, privacy 3/3, clarification 1/1, episodic 1/1, control 1/1.
+
+Every group that tests a promise in the vision passes completely: **supersession 2/2**
+(the launch date moved and Kivi answers with the new one, and can still say what it used
+to believe), **privacy 3/3**, **preference 5/5**, and the flagship case — find the Slack
+update dictated around 5pm yesterday and polish it into a standup update — passes end to
+end. All eight memory-state checks pass, including that no memory was learned from a
+personal dictation and that no inferred memory has lost its evidence.
+
+The four failures are reported rather than tuned away:
+
+- **`truvia-thread`** answers with a real but different Truvia incident from the corpus.
+  Two threads about Truvia timeouts exist and retrieval prefers the wrong one.
+- **`hdfc-status`** answers from a more recent HDFC dictation than the planted one. Not
+  wrong, but it does not surface the specific update the case asks about.
+- **`devika-screens`** abstains where the answer is present. A genuine miss.
+- **`unsupported-superlative`** says, correctly, that the history does not contain an
+  answer — but labels the turn `answered` rather than `abstained`, so the harness flags
+  it as an uncited answer. The words are right and the outcome is not.
+
 ## What the evaluation found, and what changed because of it
 
 Running the evaluation repeatedly, against real limits rather than imagined ones, found

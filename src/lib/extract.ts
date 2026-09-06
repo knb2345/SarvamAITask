@@ -58,7 +58,10 @@ private life rather than their work:
     revenue, merchant volumes, pricing, budgets, funding and headcount cost are ordinary
     working facts and must be kept;
   - family, relationships, sexuality, religion, political views, legal trouble;
-  - a credential of any kind (password, key, token, card or account number);
+  - a credential of any kind: password, passphrase, API key, token, OTP, card or
+    account number. This one does not depend on whose life it is about — a STAGING
+    password dictated into a work note is still a secret, and work context does not
+    make it safe to keep. If the dictation carries a credential, it is personal.
   - a named colleague's private life, health, pay or their leaving — as opposed to their
     role, their work and what they are responsible for, which are working facts.
 
@@ -156,6 +159,29 @@ export type ExtractionResult = {
   ignored: { text: string; reason: string }[];
 };
 
+/**
+ * A deterministic screen for secrets, applied regardless of what the model decided.
+ *
+ * The classifier reasonably read "here is the staging password for the test account" as
+ * working material — it is about work — and Kivi then recited the password back when
+ * asked. Judgement is the wrong and only line of defence for this one category: the cost
+ * of missing a credential is unbounded, the cost of over-excluding a dictation is that
+ * one message is not learned from. So a pattern match overrides the model here, and only
+ * here.
+ */
+export function carriesCredential(text: string): string | null {
+  const t = text.toLowerCase();
+  const patterns: [RegExp, string][] = [
+    [/\b(pass(word|phrase|code)|otp|pin)\b[^.!?\n]{0,40}?(is|=|:)\s*\S/i, 'states a password or passcode'],
+    [/\b(api[ -]?key|secret[ -]?key|access[ -]?token|bearer|auth token|private key)\b/i, 'mentions an API key or token'],
+    [/\b(sk-|gsk_|ghp_|xox[baprs]-|AIza)[A-Za-z0-9_-]{8,}/, 'contains something shaped like a key'],
+    [/\b(?:\d[ -]?){13,16}\b/, 'contains something shaped like a card number'],
+    [/\bcvv\b|\bifsc\b[^.!?\n]{0,30}\d/i, 'contains payment credentials'],
+  ];
+  for (const [re, why] of patterns) if (re.test(t)) return why;
+  return null;
+}
+
 /** Cheap gate before we spend a model call. */
 export function prefilter(d: Dictation): string | null {
   const text = (d.formatted || d.raw_asr || '').trim();
@@ -219,10 +245,13 @@ export async function extractBatch(
   for (const r of value.results ?? []) {
     const d = byId.get(r.dictation_id);
     if (!d) continue;
-    const personal = r.sensitivity === 'personal';
+    const secret = carriesCredential(`${d.raw_asr} ${d.formatted}`);
+    const personal = r.sensitivity === 'personal' || secret !== null;
     out.set(d.id, {
       sensitivity: personal ? 'personal' : 'work',
-      sensitivity_reason: r.sensitivity_reason,
+      sensitivity_reason: secret
+        ? `${secret}; credentials are never learned from, whatever they are for`
+        : r.sensitivity_reason,
       // Enforced here as well as in the prompt: a personal dictation produces nothing,
       // whatever the model returned alongside its classification.
       episode: personal
