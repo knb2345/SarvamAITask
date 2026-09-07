@@ -17,3 +17,7 @@ pv2.log
 seed.log
 reindex.log
 tp.log
+agg.log
+c1.log
+c2.log
+*.log
