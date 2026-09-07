@@ -13,6 +13,7 @@ import path from 'node:path';
 import { askHeyKivi } from '../src/lib/agent';
 import { config } from '../src/lib/config';
 import { db, dbSizeBytes, migrate } from '../src/lib/db';
+import { forgetMemory, getMemory, indexMemoryText, indexMemoryVector, recordRevision } from '../src/lib/memory';
 
 migrate();
 
@@ -83,8 +84,12 @@ for (const c of cases) {
     failures.push(`outcome was "${result.outcome}", expected ${expected.join(' or ')}`);
   }
 
-  // content
-  if (c.expect_any?.length) {
+  // Content, but only where content was promised. Demanding particular words inside a
+  // refusal tests the phrasing of "I don't know", which is not a property worth failing
+  // a system over; what a refusal must satisfy is must_not_contain, checked below.
+  const allowsAbstention = expected?.includes('abstained');
+  const refused = result.outcome === 'abstained' || result.outcome === 'chatted';
+  if (c.expect_any?.length && !(refused && allowsAbstention)) {
     const hit = c.expect_any.some((s: string) => haystack.includes(norm(s)));
     if (!hit) failures.push(`answer contained none of: ${c.expect_any.join(' | ')}`);
   }
@@ -130,6 +135,70 @@ for (const c of cases) {
     }
   }
 
+  if (c.min_citations) {
+    const total = (result.citations?.memories ?? []).length + (result.citations?.dictations ?? []).length;
+    if (total < c.min_citations) {
+      failures.push(`cited ${total} source(s); a question spanning several dictations needs at least ${c.min_citations}`);
+    }
+  }
+
+  /*
+   * Causality, not correlation.
+   *
+   * Every other case would pass just as well if Kivi ignored its memory and read the raw
+   * dictations each time. This one removes the memory it just cited, asks again, and
+   * requires the answer to change — then puts the memory back, because an evaluation
+   * that quietly mutates the database it is measuring is worthless on the second run.
+   */
+  let causality: any = null;
+  if (c.forget_then_reask && result.citations?.memories?.length) {
+    const target = result.citations.memories[0];
+    const before = db().prepare('SELECT status FROM memories WHERE id = ?').get(target.id) as any;
+    forgetMemory(target.id, 'user', 'removed by the evaluation to prove the answer depends on it');
+    let second: any = null;
+    try {
+      second = await askHeyKivi(userId, c.question);
+    } catch (e: any) {
+      second = { answer: '', outcome: 'error', citations: { memories: [], dictations: [] } };
+    }
+    // Put it back exactly as it was, and say so in the memory's own history.
+    db().prepare(`UPDATE memories SET status = ?, updated_at = datetime('now') WHERE id = ?`).run(before?.status ?? 'active', target.id);
+    const restored = getMemory(target.id);
+    if (restored) {
+      indexMemoryText(restored);
+      await indexMemoryVector(restored);
+      recordRevision(target.id, 'restored', 'system', 'the evaluation put this back after testing what its absence changes');
+    }
+
+    /*
+     * What must be true is that the forgotten memory stops being used. Whether the
+     * ANSWER changes is a different and more interesting question: source history is
+     * still there, so Kivi can often recover the same fact from the original dictation.
+     * The first version of this check compared answer strings and passed on a rewording,
+     * which proved nothing at all — so it asserts the citation and reports the rest.
+     */
+    const stillCited = (second.citations?.memories ?? []).some((m: any) => m.id === target.id);
+    const recovered =
+      second.outcome === 'answered' &&
+      (c.expect_any ?? []).some((x: string) => norm(second.answer).includes(norm(x)));
+    causality = {
+      forgot: { id: target.id, statement: target.statement },
+      answer_without_it: second.answer,
+      outcome_without_it: second.outcome,
+      still_cited_after_forgetting: stillCited,
+      answer_text_changed: norm(second.answer) !== norm(result.answer),
+      fact_recovered_from_source_history: recovered,
+      cited_instead: [
+        ...(second.citations?.memories ?? []).map((m: any) => m.id),
+        ...(second.citations?.dictations ?? []).map((x: any) => x.id),
+      ],
+      restored: Boolean(restored),
+    };
+    if (stillCited) {
+      failures.push(`${target.id} was forgotten and Kivi cited it anyway`);
+    }
+  }
+
   // Personal material may be found, but must never have become a memory.
   if (c.expect_no_memory_citation && (result.citations?.memories ?? []).length > 0) {
     failures.push(
@@ -172,6 +241,7 @@ for (const c of cases) {
         id: d.id, spoken_at: d.spoken_at, app: d.app, formatted: d.formatted,
       })),
     },
+    causality,
     reasoning_trace: {
       rounds: result.trace.rounds,
       notes: result.trace.notes,

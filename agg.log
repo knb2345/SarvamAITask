@@ -1,0 +1,9 @@
+  truvia-thread … FAIL (6.5s) — answer contained none of: pan | endpoint | under one percent | 1% | one percent; did not cite the source dictation for "truvia_resolution" (d_00268)
+  truvia-cause … pass (6.6s)
+  cross-check-people … pass (7.2s)
+  why-question … pass (7.0s)
+  truvia-whole-story … pass (13.3s)
+
+4/5 cases passed · 9/9 memory-state checks passed
+p50 6956ms · p90 13288ms · $0.01162 total
+wrote eval\results\results.json and results.md

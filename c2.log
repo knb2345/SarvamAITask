@@ -1,0 +1,5 @@
+  forgetting-takes-effect … pass (7.4s)
+
+1/1 cases passed · 9/9 memory-state checks passed
+p50 3472ms · p90 3472ms · $0.00057 total
+wrote eval\results\results.json and results.md

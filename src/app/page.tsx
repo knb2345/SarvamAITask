@@ -11,8 +11,11 @@ type Turn = {
   confidence?: string;
   draft?: string;
   citations?: { memories: Citation[]; dictations: Citation[] };
+  appliedPreferences?: { id: string; statement: string }[];
+  confirm?: { memory_id: string; statement: string; why: string } | null;
   trace?: any;
   error?: string;
+  settled?: 'confirmed' | 'forgotten';
 };
 
 const STARTERS = [
@@ -78,6 +81,19 @@ export default function HeyKivi() {
     }
   }
 
+  async function settle(turnIndex: number, memoryId: string, action: 'confirm' | 'forget') {
+    await fetch(`/api/memories/${memoryId}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ action, reason: 'the person answered when Kivi asked mid-conversation' }),
+    });
+    setTurns((t) =>
+      t.map((turn, i) =>
+        i === turnIndex ? { ...turn, settled: action === 'confirm' ? 'confirmed' : 'forgotten' } : turn
+      )
+    );
+  }
+
   async function forget(memoryId: string) {
     await fetch(`/api/memories/${memoryId}`, {
       method: 'PATCH',
@@ -133,15 +149,36 @@ export default function HeyKivi() {
               <div className={`kivi-answer${t.outcome === 'abstained' ? ' abstain' : ''}`}>{t.text}</div>
 
               {t.draft && (
-                <div className="draft">
-                  <div className="draft-head">
-                    <span>draft</span>
-                    <button className="linkish" onClick={() => navigator.clipboard?.writeText(t.draft!)}>
-                      copy
-                    </button>
+                <>
+                  <div className="draft">
+                    <div className="draft-head">
+                      <span>draft</span>
+                      <button className="linkish" onClick={() => navigator.clipboard?.writeText(t.draft!)}>
+                        copy
+                      </button>
+                    </div>
+                    {t.draft}
                   </div>
-                  {t.draft}
-                </div>
+                  {t.appliedPreferences && t.appliedPreferences.length > 0 && (
+                    <div className="because">
+                      <div className="because-head">
+                        Written the way you asked for, {t.appliedPreferences.length}{' '}
+                        {t.appliedPreferences.length === 1 ? 'thing' : 'things'} you have said before:
+                      </div>
+                      <div className="chips">
+                        {t.appliedPreferences.map((p) => (
+                          <button
+                            key={p.id}
+                            className="chip kind-preference"
+                            onClick={() => setOpenCite(openCite === p.id ? null : p.id)}
+                          >
+                            {p.statement}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               {t.error && <div className="banner">{t.error}</div>}
@@ -171,6 +208,32 @@ export default function HeyKivi() {
                     ))}
                   </div>
                   {openCite && <CiteDetail id={openCite} onForget={forget} />}
+                </div>
+              )}
+
+              {t.confirm && !t.settled && (
+                <div className="checkin">
+                  <div className="checkin-q">
+                    Still right? <strong>{t.confirm.statement}</strong>
+                  </div>
+                  <div className="checkin-why">{t.confirm.why}</div>
+                  <div className="mactions">
+                    <button className="linkish" onClick={() => settle(i, t.confirm!.memory_id, 'confirm')}>
+                      yes, that is right
+                    </button>
+                    <button className="linkish" onClick={() => settle(i, t.confirm!.memory_id, 'forget')}>
+                      no — forget it
+                    </button>
+                  </div>
+                </div>
+              )}
+              {t.settled && (
+                <div className="checkin">
+                  <div className="checkin-why">
+                    {t.settled === 'confirmed'
+                      ? 'Noted — Kivi will rely on that now.'
+                      : 'Forgotten. Kivi will not use it again.'}
+                  </div>
                 </div>
               )}
 

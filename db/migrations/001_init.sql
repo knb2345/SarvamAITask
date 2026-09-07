@@ -46,8 +46,11 @@ CREATE TABLE memories (
   topics_json    TEXT NOT NULL DEFAULT '[]',
   confidence     REAL NOT NULL,              -- 0..1 at creation
   support_count  INTEGER NOT NULL DEFAULT 1, -- distinct dictations that support it
+  -- active     : Kivi will use this
+  -- superseded : replaced by something the person said later; kept as history
+  -- forgotten  : removed by the person; the revision trail survives
   status         TEXT NOT NULL DEFAULT 'active'
-                 CHECK (status IN ('active','superseded','forgotten','pending')),
+                 CHECK (status IN ('active','superseded','forgotten')),
   source         TEXT NOT NULL DEFAULT 'inferred'
                  CHECK (source IN ('inferred','user_stated','user_edited')),
   supersedes_id  TEXT REFERENCES memories(id),

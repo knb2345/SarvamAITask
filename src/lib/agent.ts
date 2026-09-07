@@ -223,6 +223,10 @@ export type HeyKiviResult = {
   outcome: 'answered' | 'abstained' | 'asked' | 'acted' | 'chatted';
   confidence: string;
   draft?: string;
+  /** The stored preferences that shaped a draft, so the person can see what memory did. */
+  appliedPreferences: { id: string; statement: string }[];
+  /** One thing Kivi is going on thin evidence and would like confirmed, if any. */
+  confirm: { memory_id: string; statement: string; why: string } | null;
   citations: { memories: any[]; dictations: any[] };
   trace: {
     steps: TraceStep[];
@@ -238,7 +242,21 @@ export type HeyKiviResult = {
   };
 };
 
-const MAX_ROUNDS = 8;
+const MAX_ROUNDS = 10;
+
+/**
+ * On the last round Kivi is given only respond(), so it must answer with what it has
+ * found rather than searching once more and running out.
+ *
+ * A question that spans several dictations — "walk me through how this started and how it
+ * ended" — legitimately needs many lookups, and one was observed making eight of them,
+ * exhausting the budget and then saying it could not settle the question while holding
+ * every piece of the answer. Running out of turns is not the same as not knowing, and the
+ * person should never be told otherwise.
+ */
+const RESPOND_ONLY = [
+  { functionDeclarations: TOOL_DECLARATIONS[0].functionDeclarations.filter((f) => f.name === 'respond') },
+];
 
 export async function askHeyKivi(userId: string, question: string, history: { role: 'user' | 'kivi'; text: string }[] = []): Promise<HeyKiviResult> {
   const t0 = Date.now();
@@ -261,14 +279,24 @@ export async function askHeyKivi(userId: string, question: string, history: { ro
 
   let final: any = null;
   let rounds = 0;
+  const appliedPreferences: { id: string; statement: string }[] = [];
 
   while (rounds < MAX_ROUNDS && !final) {
     rounds++;
+    const lastRound = rounds >= MAX_ROUNDS;
     const res = await generate({
-      system: HEY_KIVI_SYSTEM,
+      system: lastRound
+        ? `${HEY_KIVI_SYSTEM}
+
+You are out of lookups. Answer now from what you already found, or say you could not find it.`
+        : HEY_KIVI_SYSTEM,
       contents,
-      tools: TOOL_DECLARATIONS,
-      temperature: 0.1,
+      tools: lastRound ? RESPOND_ONLY : TOOL_DECLARATIONS,
+      // Zero, not "nearly zero". At 0.1 the same question would take a different search
+      // path on different runs and the evaluation moved by two or three cases between
+      // identical runs, which makes a reported number an anecdote. Retrieval is already
+      // deterministic; the model choosing tools should be too.
+      temperature: 0,
       purpose: 'answer',
       forceToolCall: true,
       provider: generationProvider(config.chatProvider),
@@ -310,6 +338,9 @@ export async function askHeyKivi(userId: string, question: string, history: { ro
       const ms = Date.now() - tStep;
       if (fc.name === 'recall' || fc.name === 'find_dictations') retrievalMs += ms;
       if (fc.name === 'draft_text') {
+        for (const p of result.applied_preferences ?? []) {
+          if (!appliedPreferences.some((x) => x.id === p.id)) appliedPreferences.push(p);
+        }
         modelMs += (result.__usage?.latencyMs ?? 0);
         inputTokens += result.__usage?.inputTokens ?? 0;
         outputTokens += result.__usage?.outputTokens ?? 0;
@@ -329,8 +360,17 @@ export async function askHeyKivi(userId: string, question: string, history: { ro
   }
 
   // Citations must resolve to real rows AND actually bear on what was said.
-  const memIds: string[] = final.memory_ids ?? [];
-  const dictIds: string[] = final.dictation_ids ?? [];
+  //
+  // Models routinely name their sources in the sentence and leave the structured fields
+  // empty. Those are real citations written in the wrong place, and discarding them makes
+  // a well-sourced answer look unsupported, so they are recovered from the prose too.
+  const inProse = (final.answer ?? '').match(/[md]_[a-z0-9]+/g) ?? [];
+  const memIds: string[] = [
+    ...new Set([...(final.memory_ids ?? []), ...inProse.filter((i: string) => i.startsWith('m_'))]),
+  ];
+  const dictIds: string[] = [
+    ...new Set([...(final.dictation_ids ?? []), ...inProse.filter((i: string) => i.startsWith('d_'))]),
+  ];
   const memories = memIds.map((id) => getMemory(id)).filter(Boolean);
   const dictations = dictIds
     .map((id) => db().prepare('SELECT id, spoken_at, app, context_label, formatted FROM dictations WHERE id = ?').get(id))
@@ -382,8 +422,11 @@ export async function askHeyKivi(userId: string, question: string, history: { ro
     // Saying "from your history" about an answer with no source is the very thing this
     // product exists not to do. What the turn actually was depends on what happened.
     const searched = steps.some((s) => s.tool === 'recall' || s.tool === 'find_dictations');
+    // "You did not mention a number" is a refusal however the model labels the turn.
+    // An earlier version of this matched "does not mention" but not "did not mention",
+    // so the commonest phrasing of a refusal was being recorded as an answer.
     const saysNothingFound =
-      /(did ?n[o']?t find|could ?n[o']?t find|no (record|mention|dictation|reference)|nothing|does not (contain|mention|keep|use)|does not keep|do ?n[o']?t (have|keep|use)|never (said|mentioned)|not in your|by design)/i.test(
+      /(did|does|do) ?n[o']?t (find|mention|record|specify|say|note|have|contain|keep|use)|could ?n[o']?t find|no (record|mention|dictation|reference|specific)|nothing (in|about|recorded)|never (said|mentioned|recorded)|not in your|by design/i.test(
         final.answer
       );
     // Order matters: a refusal is an abstention whether or not Kivi searched first.
@@ -400,11 +443,37 @@ export async function askHeyKivi(userId: string, question: string, history: { ro
     }
   }
 
+  /*
+   * Interfacing when the understanding is thin.
+   *
+   * The brief asks how Kivi behaves when what it knows is incomplete or wrong. A queue of
+   * items to review would be the obvious answer and the wrong one: it turns the person
+   * into the administrator of the system, which is exactly what this product refuses to
+   * do. So Kivi asks at the moment the shaky memory is actually used, about that one
+   * memory, once — and only when it is going on genuinely thin evidence: a single
+   * mention, never confirmed, and inferred rather than something the person stated.
+   *
+   * The choice is made here rather than by the model, because "how sure are you" is not
+   * a question a language model answers reliably, and support_count is a fact.
+   */
+  const shaky = (keptMemories as any[]).find(
+    (m) => m.source === 'inferred' && m.support_count <= 1 && m.confidence < 0.9 && m.kind !== 'episode'
+  );
+
   return {
     answer: final.answer,
     outcome: final.outcome,
     confidence: final.confidence ?? 'medium',
     draft: final.draft,
+    appliedPreferences,
+    confirm:
+      shaky && (final.outcome === 'answered' || final.outcome === 'acted')
+        ? {
+            memory_id: shaky.id,
+            statement: shaky.statement,
+            why: `you mentioned this once, on ${String(shaky.first_seen_at).slice(0, 10)}, and never since`,
+          }
+        : null,
     citations: { memories: keptMemories, dictations: keptDictations },
     trace: {
       steps, rounds, notes, retrievalMs, modelMs,

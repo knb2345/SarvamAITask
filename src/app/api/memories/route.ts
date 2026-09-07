@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
 
   const params: any[] = [userId];
   let where = 'user_id = ?';
-  where += showInactive ? ` AND status != 'pending'` : ` AND status = 'active'`;
+  if (!showInactive) where += ` AND status = 'active'`;
   if (kind) {
     where += ' AND kind = ?';
     params.push(kind);

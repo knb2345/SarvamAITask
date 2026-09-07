@@ -9,7 +9,7 @@ export type Memory = {
   topics_json: string;
   confidence: number;
   support_count: number;
-  status: 'active' | 'superseded' | 'forgotten' | 'pending';
+  status: 'active' | 'superseded' | 'forgotten';
   source: 'inferred' | 'user_stated' | 'user_edited';
   supersedes_id: string | null;
   valid_from: string | null;

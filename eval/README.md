@@ -29,6 +29,19 @@ is one memory rather than three.
 Around a third of the question cases expect a refusal. A memory system that answers
 everything is not trustworthy — those cases are what keeps the rest honest.
 
+## Proving causality rather than correlation
+
+Every question case would score identically against a system that ignored its memory
+entirely and re-read the raw dictations each time. One case removes that doubt:
+`forgetting-takes-effect` answers a question, deletes the memory Kivi just cited, asks
+again, and requires that memory not to be used — then restores it and records the
+restoration in the memory's own revision history, because an evaluation that mutates the
+database it is measuring is worthless the second time it runs.
+
+The first version of this check compared the two answers as strings and passed on a
+rewording, which proved nothing. What it records now is more useful: the forgotten memory
+is not cited, and the fact is usually recovered anyway from the dictation underneath it.
+
 ## What is produced
 
 - `results/results.md` — pass/fail by group, latency percentiles, cost per question,

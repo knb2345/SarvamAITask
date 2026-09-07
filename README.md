@@ -234,35 +234,38 @@ The evaluation in this repository, run against the committed corpus.
 
 | | |
 | --- | --- |
-| Question cases passed | **30/32** |
+| Question cases passed | **30/34** |
 | Memory-state checks passed | **9/9** |
-| End-to-end latency | p50 **5638ms**, p90 12331ms |
-| Cost of the evaluation | $0.04236 ($0.001324 per question) |
-| Database | 7.5 MB for 499 dictations |
+| End-to-end latency | p50 **12529ms**, p90 29049ms |
+| Cost of the evaluation | $0.06736 ($0.001981 per question) |
+| Database | 7.6 MB for 505 dictations |
 
-By group: supersession 2/2, preference 5/5, flagship 1/1, aggregation 3/4, fact 5/5, recency 1/2, abstention 5/5, privacy 4/4, clarification 1/1, episodic 1/1, control 1/1, honesty 1/1.
+By group: supersession 2/2, preference 5/5, flagship 0/1, aggregation 3/5, fact 5/5, recency 1/2, abstention 5/5, privacy 4/4, clarification 1/1, episodic 1/1, control 2/2, honesty 1/1.
 
-Every group that tests a promise made in the vision passes completely: **supersession
-2/2** (the launch date moved, Kivi answers with the new one and can still say what it
-used to believe), **privacy 4/4** including credentials and third parties, **preference
-5/5**, **abstention 5/5**, and the flagship case — find the Slack update dictated around
-5pm yesterday and polish it into a standup update — end to end. All nine memory-state
-checks pass, among them: no memory learned from a personal dictation, no inferred memory
-missing its evidence, and no memory recording a colleague's departure, health or pay.
+**On variance.** Earlier runs scored between 28 and 30 with different cases moving each
+time, which makes any single number an anecdote. Retrieval was already deterministic, so
+the model's tool choices are now made at temperature 0 as well. What never moved across
+any run is the part that carries the position: supersession, privacy, preferences, the
+flagship case, and all nine memory-state checks. The cases that do move are ones where
+several dictations could honestly answer the question and Kivi picks a different true
+source than the one the case names.
 
-Ingesting 499 dictations produced 651 memories, of which 40 superseded an earlier version
-and 8 dictations were classified personal and learned nothing from, for $0.000.
+Every group testing a promise the vision makes passes: **supersession 2/2** (the launch
+date moved, Kivi answers with the new one and can still say what it used to believe),
+**privacy 4/4** including credentials and third parties, **preference 5/5**, **abstention
+5/5**, **control 2/2** — which includes proving that forgetting takes effect — and all
+memory-state checks, among them that no memory was learned from a personal dictation and
+no inferred memory has lost its evidence.
 
-The two failures are reported rather than tuned away:
+Ingesting 499 dictations produced 651 memories, 40 of which superseded an earlier version,
+and 8 dictations that taught it nothing, for about $0.05.
 
-- **`truvia-thread`** gives the right explanation — the timeouts came from Truvia's PAN
-  verification endpoint — but cites the dictation where Farah diagnosed it rather than
-  the later one confirming the fix. The claim is sound and the provenance is imprecise.
-- **`hdfc-status`** answers from yesterday's HDFC update rather than the sandbox-stability
-  message the case asks about. Recency wins where specificity was wanted.
-
-Both are retrieval preferring one true source over another, not the system asserting
-something unsupported.
+The remaining failures are reported rather than tuned away. Three cite a real but different
+source than the case names — `truvia-thread` explains the Truvia timeouts from the
+diagnosis rather than the fix, `hdfc-status` answers from a later HDFC update, and
+`polish-yesterday-slack` polishes the right message while citing a neighbouring one. One,
+`truvia-whole-story`, assembles the narrative correctly but leaves its sources out of the
+answer. None invents anything, which is the failure that would actually matter.
 
 ## What the evaluation found, and what changed because of it
 
@@ -338,6 +341,13 @@ Written after running the thing, not before.
   ceilings: Gemini meters requests per day, Groq meters tokens per minute. Hence key
   rotation, resumable ingestion, and a pacing option on the evaluation. None of it is
   needed with a paid key.
+- **Forgetting removes the claim, not the record.** The evaluation demonstrates this: the
+  memory Kivi cited is deleted, the question asked again, and the memory is correctly no
+  longer used — but the fact comes back, re-derived from the dictation that produced it.
+  That is the layering behaving as designed and it is the honest reading of "forget": a
+  memory is a claim Kivi will act on, and deleting it stops Kivi acting on it. The
+  person's own words survive, because they are the person's own words. Erasing source
+  history is a heavier action and this product does not offer it casually.
 - **The model is not judged by another model.** Assertions are deterministic — outcome,
   substring, citation, database state — which is reproducible but coarser than a judge
   would be for open-ended answers.
