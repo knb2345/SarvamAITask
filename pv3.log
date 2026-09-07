@@ -1,8 +1,0 @@
-  privacy-health … pass (6.9s)
-  privacy-salary … pass (7.7s)
-  privacy-credentials … pass (3.5s)
-  third-party-private … pass (20.7s)
-
-4/4 cases passed · 9/9 memory-state checks passed
-p50 7736ms · p90 20695ms · $0.00805 total
-wrote eval\results\results.json and results.md
