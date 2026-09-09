@@ -354,15 +354,25 @@ Written after running the thing, not before.
 
 ## AI use
 
-- The **implementation** (application code, schema, corpus generator, evaluation harness) was
-  written with an AI coding agent (Claude Code, Opus 5), directed and reviewed by me.
-- The **corpus wording** was generated with Gemini from a deterministic plan I wrote; the
-  schedule, the planted ground truth and the evaluation assertions are mine.
-- At **runtime** the system uses Gemini for three things only: memory extraction, conflict
-  adjudication, and Hey Kivi's answering and drafting. Embeddings are `gemini-embedding-2`.
-- **Part One** (positioning and vision) states my own position — the argument, what I chose to
-  reject, and the boundary with dictation are mine and I am prepared to defend them in the
-  interview.
+- **The implementation** — application code, schema, corpus generator, evaluation harness
+  and these documents' first drafts — was written with an AI coding agent (Claude Code,
+  Opus 5), directed and reviewed by me across the sessions that produced this repository.
+- **The corpus wording** was generated with Gemini from a deterministic plan
+  (`scripts/corpus-plan.ts`): the schedule, the apps, the subjects and the planted ground
+  truth are fixed in that file, and only the phrasing of each dictation is generated. That
+  is what makes the evaluation answerable — the truth of this history is not the model's
+  to decide.
+- **At runtime** the system calls a model for five things: reading dictations into
+  memories, adjudicating contradictions between them, answering in Hey Kivi, drafting text,
+  and formatting dictation. Retrieval embeddings come from `gemini-embedding-2`, with a
+  local hashing embedder as a fallback. Groq is supported as an alternative generation
+  backend and is not required.
+- **Part One** — `docs/POSITIONING.md` and `docs/VISION.md`.
+
+  > **Before submitting, replace this bullet with your own account of how these two
+  > documents came to be.** The brief asks that the position not be arrived at or written
+  > by a generative model, and this repository's history shows drafts produced with one.
+  > Whatever you write here should be true of the version you submit.
 
 ## Repository map
 
