@@ -61,7 +61,10 @@ private life rather than their work:
   - a credential of any kind: password, passphrase, API key, token, OTP, card or
     account number. This one does not depend on whose life it is about — a STAGING
     password dictated into a work note is still a secret, and work context does not
-    make it safe to keep. If the dictation carries a credential, it is personal.
+    make it safe to keep. If the dictation carries an actual credential VALUE, it is personal.
+    A request to share credentials, a note that credentials are pending, or a status
+    update about authentication contains no credential by itself. Those are work, not
+    personal. Do not classify by the presence of the word "credentials" alone.
   - anything durable about another named person beyond their working role. Their job,
     what they own and what they have committed to are working facts and are kept. Their
     health, pay, family, performance, and whether they are leaving are not — that person
@@ -75,7 +78,8 @@ own money and is not. Otherwise set it to "work".
 
 A dictation marked "personal" gets NO episode summary and NO memories — return an empty
 episode summary and an empty memories list for it, and say why in sensitivity_reason. Kivi
-keeps the person's dictation, but it does not learn from it and will not retrieve it later.
+keeps the person's dictation but does not learn from it. Hey Kivi may retrieve personal
+source text only when the person asks about it; credential values are never retrieved.
 This matters more than being helpful: a personal message the person happened to dictate is
 not working material.
 
@@ -95,7 +99,7 @@ Each memory statement must be:
   - carrying its own specifics (dates, names, numbers) rather than referring to "the meeting".
 
 Also produce an EPISODE summary: one sentence describing what this dictation was, in the past
-tense, naming the destination app and the subject. This is always produced, for every dictation.
+tense, naming the destination app and the subject. Produce it only for work dictations.
 
 confidence: 0.9+ explicitly stated and unambiguous; 0.7-0.9 clearly stated but slightly
 underspecified; below 0.7 do not emit it at all.

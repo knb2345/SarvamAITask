@@ -1,8 +1,9 @@
 import { config } from './config';
+import { citationIds } from './history-time';
 import { db, newId } from './db';
 import { generate, generationProvider, type GenContent } from './gemini';
 import { confirmMemory, createMemory, forgetMemory, getMemory } from './memory';
-import { RETRIEVAL_FLOOR, searchDictations, searchMemories } from './retrieve';
+import { RETRIEVAL_FLOOR, relatedDictations, searchDictations, searchMemories } from './retrieve';
 
 /**
  * Hey Kivi.
@@ -52,6 +53,15 @@ HOW TO WORK
 3. Search more than once, with different words, before concluding you do not know. Facts
    about one subject are often spread across several dictations, and if the first search
    returns only loosely related material, try a narrower query rather than giving up.
+   For a problem's cause, resolution or whole story, you MUST recall its subject first,
+   then follow the specific mechanism or component named in that memory into source
+   dictations. Search both the diagnosis and its follow-up; a later unrelated incident
+   does not erase an earlier resolution. Do not restrict these searches to recent dates.
+   recall() also returns related source dictations. Read them: they may contain the
+   follow-up to a diagnosis even when that follow-up was not made into a durable memory.
+   If the history contains distinct incidents, separate their causes and resolutions.
+   For current status, inspect recent source dictations with sort: "recent" and quote the
+   latest explicit status and outstanding next step. Do not invent a date cutoff.
 4. Use open_dictation() when you need the exact words rather than a summary.
 5. Use draft_text() whenever the person asks you to write, polish, rewrite, or prepare
    something. Pass the preference memory ids you found so the draft sounds like them.
@@ -138,6 +148,7 @@ export const TOOL_DECLARATIONS = [
             },
             since: { type: 'string', description: 'ISO datetime lower bound' },
             until: { type: 'string', description: 'ISO datetime upper bound' },
+            sort: { type: 'string', enum: ['relevance', 'recent'], description: 'Use recent for current status; relevance for a specific topic or past incident.' },
             limit: { type: 'number' },
           },
         },
@@ -258,7 +269,7 @@ const RESPOND_ONLY = [
   { functionDeclarations: TOOL_DECLARATIONS[0].functionDeclarations.filter((f) => f.name === 'respond') },
 ];
 
-export async function askHeyKivi(userId: string, question: string, history: { role: 'user' | 'kivi'; text: string }[] = []): Promise<HeyKiviResult> {
+export async function askHeyKivi(userId: string, question: string, history: { role: 'user' | 'kivi'; text: string }[] = [], options: { now?: Date } = {}): Promise<HeyKiviResult> {
   const t0 = Date.now();
   const steps: TraceStep[] = [];
   const notes: string[] = [];
@@ -268,8 +279,8 @@ export async function askHeyKivi(userId: string, question: string, history: { ro
   let outputTokens = 0;
   let costUsd = 0;
 
-  const now = new Date();
-  const preamble = `Today is ${now.toISOString().slice(0, 10)} (${now.toUTCString()}). All stored timestamps are UTC ISO8601.`;
+  const now = options.now ?? new Date();
+  const preamble = `Today is ${now.toISOString().slice(0, 10)} (${now.toUTCString()}). All stored timestamps and unspecified clock times are UTC. For "around" a clock time, allow an hour either side. Keep the requested app and day; if that window has no match, ask before substituting a different message.`;
 
   const contents: GenContent[] = [];
   for (const h of history.slice(-6)) {
@@ -311,7 +322,7 @@ You are out of lookups. Answer now from what you already found, or say you could
       // The model spoke without using respond(). It has still answered, and its answer
       // usually names the ids it used — so recover them rather than throwing away a
       // good reply and calling it a refusal, which is what it is not.
-      const ids = res.text.match(/\b[md]_[a-z0-9]+\b/g) ?? [];
+      const ids = citationIds(res.text);
       notes.push(
         `model answered in free text instead of calling respond(); recovered ${ids.length} citation(s) from the text`
       );
@@ -364,16 +375,16 @@ You are out of lookups. Answer now from what you already found, or say you could
   // Models routinely name their sources in the sentence and leave the structured fields
   // empty. Those are real citations written in the wrong place, and discarding them makes
   // a well-sourced answer look unsupported, so they are recovered from the prose too.
-  const inProse = (final.answer ?? '').match(/[md]_[a-z0-9]+/g) ?? [];
+  const inProse = citationIds((final.answer ?? '') + ' ' + (final.draft ?? ''));
   const memIds: string[] = [
     ...new Set([...(final.memory_ids ?? []), ...inProse.filter((i: string) => i.startsWith('m_'))]),
   ];
   const dictIds: string[] = [
     ...new Set([...(final.dictation_ids ?? []), ...inProse.filter((i: string) => i.startsWith('d_'))]),
   ];
-  const memories = memIds.map((id) => getMemory(id)).filter(Boolean);
+  const memories = memIds.map((id) => getMemory(id)).filter((m) => m && m.user_id === userId && m.status !== 'forgotten');
   const dictations = dictIds
-    .map((id) => db().prepare('SELECT id, spoken_at, app, context_label, formatted FROM dictations WHERE id = ?').get(id))
+    .map((id) => db().prepare("SELECT id, spoken_at, app, context_label, formatted FROM dictations WHERE id = ? AND user_id = ? AND COALESCE(sensitivity, 'work') != 'secret'").get(id, userId))
     .filter(Boolean);
   const invalid = [
     ...memIds.filter((id) => !memories.find((m: any) => m.id === id)),
@@ -503,8 +514,14 @@ async function runTool(
         includeInactive: args.include_history === true,
       });
       const kept = found.filter((m) => m.score >= RETRIEVAL_FLOOR);
+      const linked = [...new Map(kept.filter((m) => m.kind === 'fact').slice(0, 3)
+        .flatMap((m) => relatedDictations(userId, m.statement))
+        .map((d) => [d.id, d])).values()];
       return {
         result: {
+          related_dictations: linked.map((d) => ({
+            id: d.id, spoken_at: d.spoken_at, app: d.app, text: d.formatted.slice(0, 600),
+          })),
           memories: kept.map((m) => ({
             id: m.id, kind: m.kind, statement: m.statement, subject: m.subject,
             confidence: Number(m.confidence.toFixed(2)), supported_by_dictations: m.support_count,
@@ -519,18 +536,21 @@ async function runTool(
         },
         step: {
           summary: `${kept.length} of ${found.length} candidate memories passed the relevance floor (${RETRIEVAL_FLOOR})`,
-          candidates: found.map((m) => ({
+          candidates: [...found.map((m) => ({
             id: m.id, kind: m.kind, text: m.statement, score: Number(m.score.toFixed(4)),
             vec: Number(m.vec_score.toFixed(4)), bm25: Number(m.bm25_score.toFixed(3)),
             used: m.score >= RETRIEVAL_FLOOR,
-          })),
+          })), ...linked.map((d) => ({
+            id: d.id, kind: 'source', text: d.formatted, score: d.score,
+            vec: 0, bm25: d.bm25_score, used: true,
+          }))],
         },
       };
     }
     case 'find_dictations': {
       const found = await searchDictations({
         userId, query: args.query, app: args.app ?? null, since: args.since ?? null,
-        until: args.until ?? null, limit: Math.min(args.limit ?? 6, 12),
+        until: args.until ?? null, limit: Math.min(args.limit ?? 12, 20), sort: args.sort,
         includePersonal: args.include_personal === true,
       });
       const withheld = (
@@ -544,13 +564,13 @@ async function runTool(
         result: {
           dictations: found.map((d) => ({
             id: d.id, spoken_at: d.spoken_at, app: d.app, context: d.context_label,
-            style: d.style, preview: d.formatted.slice(0, 220),
+            style: d.style, preview: d.formatted.slice(0, 600),
           })),
           note: found.length === 0 ? 'no dictations matched' : undefined,
-          excluded_personal_dictations: withheld,
+          excluded_personal_dictations: args.include_personal === true ? 0 : withheld,
         },
         step: {
-          summary: `${found.length} dictations matched (${withheld} personal dictations are excluded from every search)`,
+          summary: `${found.length} dictations matched (${args.include_personal === true ? 'personal history included at the person\'s request' : `${withheld} personal dictations excluded`})`,
           candidates: found.map((d) => ({
             id: d.id, text: d.formatted.slice(0, 140), score: Number(d.score.toFixed(4)),
             vec: Number(d.vec_score.toFixed(4)), bm25: Number(d.bm25_score.toFixed(3)), used: true,
@@ -568,7 +588,7 @@ async function runTool(
         };
       }
       const mem = db()
-        .prepare(`SELECT m.id, m.kind, m.statement FROM memory_evidence e JOIN memories m ON m.id = e.memory_id WHERE e.dictation_id = ?`)
+        .prepare(`SELECT m.id, m.kind, m.statement FROM memory_evidence e JOIN memories m ON m.id = e.memory_id WHERE e.dictation_id = ? AND m.status != 'forgotten'`)
         .all(d.id);
       return {
         result: {
@@ -581,9 +601,10 @@ async function runTool(
     }
     case 'draft_text': {
       const sources = (args.source_dictation_ids ?? [])
-        .map((id: string) => db().prepare('SELECT id, spoken_at, app, formatted FROM dictations WHERE id = ?').get(id))
+        .map((id: string) => db().prepare("SELECT id, spoken_at, app, formatted FROM dictations WHERE id = ? AND user_id = ? AND COALESCE(sensitivity, 'work') != 'secret'").get(id, userId))
         .filter(Boolean) as any[];
-      const prefs = (args.preference_memory_ids ?? []).map((id: string) => getMemory(id)).filter(Boolean) as any[];
+      const prefs = (args.preference_memory_ids ?? []).map((id: string) => getMemory(id))
+        .filter((m: any) => m && m.user_id === userId && m.status === 'active' && m.kind === 'preference') as any[];
       const res = await generate({
         system: `You write in another person's voice inside Kivi. Produce only the finished text —
 no preamble, no explanation, no options. Follow the person's stored preferences exactly; where

@@ -97,9 +97,9 @@ Hey Kivi:  question → tools(recall, find_dictations, open_dictation, draft_tex
 The two model workloads have opposite shapes, so they are routed independently.
 Extraction is roughly a hundred large batched calls; Hey Kivi is many small ones where
 latency is what the person feels. Free tiers are metered on opposite axes — Gemini by
-requests per day, Groq by tokens per minute — so each workload goes where its limit is
-not the binding one, and either can be pinned with `KIVI_EXTRACT_PROVIDER` and
-`KIVI_CHAT_PROVIDER`. Embeddings stay on Gemini (Groq has none) with a local hashing
+requests and tokens — and either workload can be configured with
+`KIVI_EXTRACT_PROVIDER` and `KIVI_CHAT_PROVIDER`. Both default to Gemini; Groq is an
+optional provider and fallback. Embeddings stay on Gemini (Groq has none) with a local hashing
 embedder as the last resort. Every call records which model served it.
 
 ### Three layers, not one
@@ -134,8 +134,9 @@ away" are both true without contradiction.
 | memory | `fact` | durable, checkable things: dates, owners, decisions, numbers | most questions are factual |
 | memory | `preference` | how this person wants language produced, stated as a rule | this is what makes drafts sound like them |
 
-Facts and preferences are scarce and heavily deduplicated: 166 facts and 7 preferences
-from 499 dictations. Episodes are dense, one per dictation, and never merged.
+Facts and preferences are deduplicated; their measured counts are in the generated
+evaluation report. Episodes index work dictations and are never merged. Personal and
+credential-bearing dictations do not produce episodes.
 
 ### Inference, not guessing
 
@@ -160,7 +161,7 @@ that none of them made it into memory.
 
 ### Storage and retrieval
 
-SQLite (`better-sqlite3`), schema in `db/migrations/001_init.sql`:
+SQLite (`better-sqlite3`), schema and upgrades in `db/migrations/*.sql`:
 
 - `dictations` + `dictations_fts` (FTS5) + `dictation_embeddings` (768-dim float32 blobs)
 - `memories` + `memories_fts` + `memory_embeddings`
@@ -171,10 +172,12 @@ SQLite (`better-sqlite3`), schema in `db/migrations/001_init.sql`:
 - `model_calls` — tokens, latency and cost for every request the system makes
 - `conversations` / `turns` — every Hey Kivi turn with its full trace
 
-Retrieval is a flat scan fused with FTS5. At this scale (one user, hundreds of memories,
-thousands of dictations) an ANN index would be ceremony: p50 retrieval is a few hundred
-milliseconds, dominated by the embedding round-trip, not the search. A vector extension
-becomes worthwhile in the tens of thousands of memories per user.
+Retrieval is a flat scan fused with FTS5. Exact combinations of query terms are ranked
+ahead of broad matches. Recall also follows the top fact statements into related source
+messages, so a resolution remains findable even if it was not promoted to a durable fact. At this scale (one user, hundreds of memories,
+thousands of dictations), the implementation uses an in-process scan. The evaluation
+reports measured retrieval latency, including embedding requests. Larger histories would
+need an indexed vector search.
 
 **Embeddings are not allowed to be a single point of failure.** If the embedding API is
 out of quota or unreachable, a circuit breaker trips once and the rest of the run uses a
@@ -216,7 +219,7 @@ Regenerate with `npm run corpus:generate` (the committed file is what the evalua
 
 ## Evaluation
 
-`npm run eval` runs 30 question cases and 6 memory-state checks through the *complete*
+`npm run eval` runs 34 question cases and 9 memory-state checks through the *complete*
 pipeline — real retrieval, real tools, real model — and writes `eval/results/results.json`
 (everything: input, candidates with scores, memory provenance, trace, verdict) and
 `results.md` (summary, latency, cost, failures).
@@ -230,47 +233,49 @@ Results, including the failures, are in [`eval/results/results.md`](eval/results
 
 ## Results
 
-The evaluation in this repository, run against the committed corpus.
+The evaluation in this repository, run against the committed corpus on a freshly seeded
+database.
 
 | | |
 | --- | --- |
-| Question cases passed | **30/34** |
+| Question cases passed | **32/34** |
 | Memory-state checks passed | **9/9** |
-| End-to-end latency | p50 **12529ms**, p90 29049ms |
-| Cost of the evaluation | $0.06736 ($0.001981 per question) |
-| Database | 7.6 MB for 505 dictations |
+| End-to-end latency | p50 **7063ms**, p90 40718ms |
+| Cost of the evaluation | $0.06212 ($0.001827 per question) |
+| Database | 7.1 MB for 499 dictations |
 
-By group: supersession 2/2, preference 5/5, flagship 0/1, aggregation 3/5, fact 5/5, recency 1/2, abstention 5/5, privacy 4/4, clarification 1/1, episodic 1/1, control 2/2, honesty 1/1.
+By group: supersession 2/2, preference 5/5, flagship 1/1, aggregation 4/5, fact 5/5, recency 1/2, abstention 5/5, privacy 4/4, clarification 1/1, episodic 1/1, control 2/2, honesty 1/1.
 
-**On variance.** Earlier runs scored between 28 and 30 with different cases moving each
-time, which makes any single number an anecdote. Retrieval was already deterministic, so
-the model's tool choices are now made at temperature 0 as well. What never moved across
-any run is the part that carries the position: supersession, privacy, preferences, the
-flagship case, and all nine memory-state checks. The cases that do move are ones where
-several dictations could honestly answer the question and Kivi picks a different true
-source than the one the case names.
+Ingesting 499 dictations produced 119 new memories, 30 reinforced and
+32 superseded, with 8 dictations learned nothing from and no errors, for
+$0.076.
 
-Every group testing a promise the vision makes passes: **supersession 2/2** (the launch
-date moved, Kivi answers with the new one and can still say what it used to believe),
-**privacy 4/4** including credentials and third parties, **preference 5/5**, **abstention
-5/5**, **control 2/2** — which includes proving that forgetting takes effect — and all
-memory-state checks, among them that no memory was learned from a personal dictation and
-no inferred memory has lost its evidence.
+Every group that tests a promise made in the vision passes: **supersession 2/2** (the
+launch date moved, Kivi answers with the new one and can still say what it used to
+believe), **privacy 4/4** including credentials and third parties, **preference 5/5**,
+**abstention 5/5**, **control 2/2** — which includes proving that forgetting takes effect —
+the flagship case, and all nine memory-state checks, among them that no memory was learned
+from a personal dictation and no inferred memory has lost its evidence.
 
-Ingesting 499 dictations produced 651 memories, 40 of which superseded an earlier version,
-and 8 dictations that taught it nothing, for about $0.05.
+Two failures remain, and both are retrieval preferring a more recent true source over the
+one the case names:
 
-The remaining failures are reported rather than tuned away. Three cite a real but different
-source than the case names — `truvia-thread` explains the Truvia timeouts from the
-diagnosis rather than the fix, `hdfc-status` answers from a later HDFC update, and
-`polish-yesterday-slack` polishes the right message while citing a neighbouring one. One,
-`truvia-whole-story`, assembles the narrative correctly but leaves its sources out of the
-answer. None invents anything, which is the failure that would actually matter.
+- **`truvia-thread`** asks how the Truvia timeouts ended. The history holds more than one
+  Truvia incident, and Kivi answers about the most recent — a spike Rahul traced to a
+  timeout — rather than the July resolution where the vendor moved PAN verification to a
+  new endpoint. Both happened; the case wants the older one.
+- **`hdfc-status`** answers from the most recent HDFC update rather than the sandbox
+  stability message the case names.
+
+Neither invents anything, and the companion case `truvia-whole-story` — which asks for the
+whole sequence rather than a single answer — assembles it correctly across twelve source
+dictations including the one `truvia-thread` misses. The gap is ranking, not recall.
 
 ## What the evaluation found, and what changed because of it
 
 Running the evaluation repeatedly, against real limits rather than imagined ones, found
-five faults. None was cosmetic, and three would have failed in front of a reviewer.
+faults in provenance, retrieval, privacy handling and response labelling. The changes below
+explain the resulting behavior.
 
 **A re-import silently destroyed every memory's provenance.** Importing a corpus that had
 already been read left 361 of 521 memories unable to show the sentence they came from.
@@ -292,7 +297,8 @@ or money, but an episode was written for *every* dictation, and an episode summa
 very content the rules exclude. Kivi had stored "the user sent a WhatsApp message to their
 sister about having a migraine and booking a neurologist appointment". The decision now
 happens once, at extraction: a dictation classified personal produces no episode and no
-memories, is excluded from every Hey Kivi lookup, and is labelled in `/history`.
+memories and is labelled in `/history`. It is excluded from ordinary searches, but the
+person can explicitly ask to retrieve their own source text. Credentials remain excluded.
 
 **Supersession missed contradictions.** Both launch dates stayed active at once and Kivi
 answered with the stale one. Reading was hybrid but *writing* was dense-only, so when the
@@ -304,7 +310,7 @@ than only the closest.
 **The product asserted provenance it did not have.** Saying "hi" came back labelled "from
 your history, high confidence" after zero lookups, and took 24 seconds. Conversation is
 now a distinct outcome, the interface refuses to claim a source it does not have, and the
-thinking budget was cut: 24.3s to 1.6s for a greeting, and about 2.5s for a real question.
+thinking budget was reduced. The current measured latencies are in the evaluation report.
 
 Two failures were the evaluation's fault rather than the product's, and were corrected:
 assertions that banned words Kivi may legitimately quote while explaining a refusal
@@ -315,11 +321,11 @@ being recorded as refusals when they were correct and cited.
 
 Written after running the thing, not before.
 
-- **"Personal" is a model's judgement.** Seven dictations were classified personal and
-  nothing was learned from them, but this is classification, not a guarantee. Every
+- **"Personal" is a model's judgement.** Personal dictations produce no memories,
+  but this is classification, not a guarantee. Every
   decision is visible in `/history`, which is the honest mitigation: you can see what it
   refused, and disagree.
-- **Episodes are one row per dictation.** Five hundred rows the person never asked for.
+- **Episodes are one row per work dictation.** They add storage and retrieval overhead.
   They earn it — time-and-app recall depends on them, and they keep transient content out
   of the fact layer — but it is a real cost and the reason the memory page filters by kind.
 - **Reconciliation is pairwise.** A candidate is compared against its nearest existing
@@ -335,12 +341,10 @@ Written after running the thing, not before.
   index well before a million memories.
 - **One user.** A `user_id` column and no authentication. The demo operates as
   `KIVI_USER_ID`.
-- **Free-tier limits dominate wall-clock, not the system.** Answering is fast — p50 under
-  three seconds. Ingesting 499 dictations is about 120 model calls and the evaluation
-  about 150, which sits inside a paid tier comfortably and awkwardly across free-tier
-  ceilings: Gemini meters requests per day, Groq meters tokens per minute. Hence key
-  rotation, resumable ingestion, and a pacing option on the evaluation. None of it is
-  needed with a paid key.
+- **Model quotas affect latency.** Ingestion and evaluation make real external model calls.
+  Rate limits, retries and provider fallback can increase latency and change results.
+  The call ledger and evaluation report record usage; costs are estimates from the pricing
+  table in `src/lib/config.ts`, not billing invoices.
 - **Forgetting removes the claim, not the record.** The evaluation demonstrates this: the
   memory Kivi cited is deleted, the question asked again, and the memory is correctly no
   longer used — but the fact comes back, re-derived from the dictation that produced it.
@@ -370,14 +374,15 @@ Written plainly, because the alternative is a claim that would not survive an in
   adjudicating contradictions, answering in Hey Kivi, drafting text, and formatting
   dictation. Retrieval embeddings come from `gemini-embedding-2` with a local hashing
   embedder as a fallback. Groq is supported as an alternative backend and is not required.
-- **Part One** — `docs/POSITIONING.md` and `docs/VISION.md` — is my own thinking and writing.
-  I made the product calls: the source-history split, the line
-  between inference and guessing, the question of what Kivi may hold about a colleague who
-  never chose to be here, and the objection that "read everything it knows in a minute"
-  does not scale. I can explain and defend the position in the interview.
+- **Part One** — `docs/POSITIONING.md` and `docs/VISION.md` — was conceived and originally
+  written entirely by me, without an AI wording pass. I made the product calls: the source-history split, the line
+  between inference and guessing, what Kivi may hold about a colleague who never chose to
+  be here, and why "read everything it knows in a minute" does not scale. The content
+  and decisions are mine. I can explain
+  and defend the position in the interview.
 
 The most useful thing the assistant did was not writing code. It was running the
-evaluation often enough to find nine real faults, several of which would have failed in
+evaluation often enough to find real faults, several of which would have failed in
 front of a reviewer: a staging password recited back, provenance destroyed by re-importing
 a corpus, citations that pointed at memories unrelated to the answer. Those are written up
 above rather than quietly fixed.
@@ -386,7 +391,7 @@ above rather than quietly fixed.
 
 ```
 docs/POSITIONING.md, docs/VISION.md   Part One
-db/migrations/001_init.sql            schema (the only migration; db:reset applies it)
+db/migrations/*.sql                  schema and all three migrations
 src/lib/config.ts                     env, model ids, pricing table
 src/lib/db.ts                         connection, migrations, ids
 src/lib/gemini.ts                     API client: retries, quota back-off, cost ledger
@@ -395,13 +400,13 @@ src/lib/ingest.ts                     the pipeline: prefilter → extract → re
 src/lib/memory.ts                     create / reinforce / supersede / amend / forget
 src/lib/retrieve.ts                   hybrid retrieval, RRF, similarity for dedup
 src/lib/agent.ts                      Hey Kivi: tools, loop, citation verification, trace
-src/app/                              the four surfaces + API routes
+src/app/                              the five surfaces + API routes
 scripts/corpus-plan.ts                the deterministic corpus schedule and ground truth
 scripts/generate-corpus.ts            corpus generation
 scripts/ingest.ts, seed.ts            import
 scripts/eval.ts                       the evaluation
 scripts/migrate.ts, reset.ts          database lifecycle
-eval/questions.json                   30 cases + 6 memory-state checks
+eval/questions.json                   34 cases + 9 memory-state checks
 eval/results/                         generated results
 corpus/dictations.jsonl               499 records
 ```

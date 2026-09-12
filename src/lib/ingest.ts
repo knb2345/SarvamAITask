@@ -1,4 +1,5 @@
 import { config } from './config';
+import { demoDateShift } from './history-time';
 import { db, dbSizeBytes, ensureUser, newId } from './db';
 import { embedWithProvider, generateJson, toBlob } from './gemini';
 import { embeddingTextFor } from './memory';
@@ -214,14 +215,8 @@ export async function ingest(
   dictations.sort((a, b) => a.spoken_at.localeCompare(b.spoken_at)); // memory is built in time order
 
   if (options.shiftToToday && dictations.length) {
-    const newest = Date.parse(dictations[dictations.length - 1].spoken_at);
-    const target = new Date();
-    target.setUTCDate(target.getUTCDate() - 1);
-    target.setUTCHours(18, 0, 0, 0);
-    const delta = target.getTime() - newest;
-    if (delta > 0) {
-      for (const d of dictations) d.spoken_at = new Date(Date.parse(d.spoken_at) + delta).toISOString();
-    }
+    const delta = demoDateShift(dictations[dictations.length - 1].spoken_at);
+    for (const d of dictations) d.spoken_at = new Date(Date.parse(d.spoken_at) + delta).toISOString();
   }
 
   const insertAll = db().transaction((ds: Dictation[]) => {

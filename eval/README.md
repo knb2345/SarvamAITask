@@ -8,7 +8,7 @@ human-readable record.
 
 `questions.json` holds two kinds of check.
 
-**Question cases** (30). Each one states what a correct product does, not what a model
+**Question cases** (34). Each one states what a correct product does, not what a model
 happens to say:
 
 | field | meaning |
@@ -21,12 +21,12 @@ happens to say:
 | `expect_memory_created` | an explicit "remember this" actually wrote a `user_stated` memory |
 | `why` | why this case is in the set at all |
 
-**Memory-state checks** (6). Assertions about the database itself, with no model involved:
+**Memory-state checks** (9). Assertions about the database itself, with no model involved:
 that nothing about health, personal money, credentials or gossip was ever written; that the
 old launch date is `superseded` rather than deleted; and that a preference stated three times
 is one memory rather than three.
 
-Around a third of the question cases expect a refusal. A memory system that answers
+Some question cases require refusal; personal-history cases allow source retrieval but prohibit memory citations. A memory system that answers
 everything is not trustworthy — those cases are what keeps the rest honest.
 
 ## Proving causality rather than correlation
@@ -57,3 +57,12 @@ Each failure names the assertion that broke ("outcome was abstained, expected an
 `results.json` and the `reasoning_trace.steps[].candidates` list shows whether the memory was
 never retrieved, retrieved but below the floor, or retrieved and ignored by the model — which
 are three different bugs with three different fixes.
+
+## Reproducing dates and state
+
+Run `npm run db:reset`, `npm run seed`, then `npm run eval` for a fresh corpus run.
+The evaluator freezes its clock to noon UTC on the day after the latest source dictation;
+Hey Kivi requests created during evaluation do not change that reference. The report saves
+this clock alongside actual execution time. The application continues using the real clock.
+The explicit-remember case creates a source record and memory; reset and seed again before
+comparing a fresh run. The forgetting case restores the memory it temporarily removes.

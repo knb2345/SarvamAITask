@@ -79,7 +79,7 @@ export type MemorySearchOpts = {
 
 export async function searchMemories(opts: MemorySearchOpts): Promise<ScoredMemory[]> {
   const limit = opts.limit ?? 12;
-  const statusClause = opts.includeInactive ? '' : `AND m.status = 'active'`;
+  const statusClause = opts.includeInactive ? `AND m.status IN ('active', 'superseded')` : `AND m.status = 'active'`;
   const kinds = opts.kinds?.length ? opts.kinds : null;
 
   const params: any[] = [opts.userId];
@@ -237,7 +237,24 @@ export type DictationSearchOpts = {
   limit?: number;
   /** Include dictations classified personal. They are never learned from either way. */
   includePersonal?: boolean;
+  sort?: 'relevance' | 'recent';
 };
+
+/** Follow a learned statement into related source messages, including later follow-ups.
+ * Lexical expansion is cheap and uses only words from actual retrieved memory.
+ */
+export function relatedDictations(userId: string, statement: string, limit = 4): ScoredDictation[] {
+  const match = ftsEscape(statement);
+  if (!match) return [];
+  const rows = db().prepare(`
+    SELECT d.*, -bm25(dictations_fts, 0.0, 1.0, 0.5, 0.7) AS lexical
+    FROM dictations_fts JOIN dictations d ON d.id = dictations_fts.dictation_id
+    WHERE dictations_fts MATCH ? AND d.user_id = ?
+      AND (d.sensitivity IS NULL OR d.sensitivity = 'work')
+    ORDER BY bm25(dictations_fts, 0.0, 1.0, 0.5, 0.7) LIMIT ?
+  `).all(match, userId, limit) as any[];
+  return rows.map((d) => ({ ...d, score: d.lexical, vec_score: 0, bm25_score: d.lexical }));
+}
 
 export async function searchDictations(opts: DictationSearchOpts): Promise<ScoredDictation[]> {
   const limit = opts.limit ?? 10;
@@ -299,12 +316,21 @@ export async function searchDictations(opts: DictationSearchOpts): Promise<Score
   }
 
   const match = ftsEscape(opts.query);
+  const exact = new Set<string>();
+  if (match) {
+    // Search all meaningful terms together as well as the broad semantic/OR search.
+    // This prevents a common subject from crowding out its specific component or fix.
+    for (const row of db().prepare('SELECT dictation_id FROM dictations_fts WHERE dictations_fts MATCH ?')
+      .all(match.replace(/ OR /g, ' AND ')) as any[]) {
+      if (allowed.has(row.dictation_id)) exact.add(row.dictation_id);
+    }
+  }
   let bmRanked: { id: string; score: number }[] = [];
   if (match) {
     const rows = db()
       .prepare(
         `SELECT dictation_id, bm25(dictations_fts, 0.0, 1.0, 0.5, 0.7) AS b
-         FROM dictations_fts WHERE dictations_fts MATCH ? ORDER BY b LIMIT 80`
+         FROM dictations_fts WHERE dictations_fts MATCH ? ORDER BY b`
       )
       .all(match) as any[];
     bmRanked = rows.filter((r) => allowed.has(r.dictation_id)).map((r) => ({ id: r.dictation_id, score: -r.b }));
@@ -324,15 +350,16 @@ export async function searchDictations(opts: DictationSearchOpts): Promise<Score
   const bmScore = new Map(bmRanked.map((r) => [r.id, r.score]));
 
   const byId = new Map(pool.map((d) => [d.id, d]));
-  const ids = new Set([...vecRank.keys(), ...bmRank.keys()]);
+  const ids = new Set([...vecRank.keys(), ...bmRank.keys(), ...exact]);
   return [...ids]
     .map((id) => {
       const d = byId.get(id)!;
       const fused =
         ((vecRank.has(id) ? rrf(vecRank.get(id)!) : 0) + (bmRank.has(id) ? rrf(bmRank.get(id)!) : 0)) / (2 * rrf(1));
-      return { ...d, score: fused, vec_score: vecScore.get(id) ?? 0, bm25_score: bmScore.get(id) ?? 0 };
+      return { ...d, score: fused + (exact.has(id) ? 1 : 0), vec_score: vecScore.get(id) ?? 0, bm25_score: bmScore.get(id) ?? 0 };
     })
-    .sort((a, b) => b.score - a.score)
+    .filter((d) => opts.sort !== 'recent' || (exact.size ? exact.has(d.id) : bmRank.size ? bmRank.has(d.id) : true))
+    .sort((a, b) => opts.sort === 'recent' ? b.spoken_at.localeCompare(a.spoken_at) || b.score - a.score : b.score - a.score)
     .slice(0, limit);
 }
 

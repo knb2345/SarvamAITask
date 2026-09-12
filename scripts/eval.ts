@@ -12,6 +12,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { askHeyKivi } from '../src/lib/agent';
 import { config } from '../src/lib/config';
+import { evaluationTime } from '../src/lib/history-time';
 import { db, dbSizeBytes, migrate } from '../src/lib/db';
 import { forgetMemory, getMemory, indexMemoryText, indexMemoryVector, recordRevision } from '../src/lib/memory';
 
@@ -23,13 +24,20 @@ const outDir = args.find((a) => a.startsWith('--out='))?.split('=')[1] ?? path.j
 const userId = args.find((a) => a.startsWith('--user='))?.split('=')[1] ?? config.defaultUserId;
 
 const spec = JSON.parse(fs.readFileSync(path.join('eval', 'questions.json'), 'utf8'));
-const cases = spec.cases.filter((c: any) => !only || c.id === only || c.group === only);
+const selected = only?.split(',');
+const cases = spec.cases.filter((c: any) => !selected || selected.includes(c.id) || selected.includes(c.group));
 
 const dictationCount = (db().prepare('SELECT COUNT(*) c FROM dictations WHERE user_id = ?').get(userId) as any).c;
 if (dictationCount === 0) {
   console.error('No dictations in the database. Run: npm run db:reset && npm run seed');
   process.exit(1);
 }
+
+// Freeze relative dates to the source corpus so a saved database is still evaluable
+// tomorrow. User requests created by the evaluation must not advance that clock.
+const newest = (db().prepare("SELECT MAX(spoken_at) newest FROM dictations WHERE user_id = ? AND COALESCE(app, '') != 'hey kivi'").get(userId) as any).newest;
+const referenceTime = evaluationTime(newest);
+console.log(`Evaluation clock: ${referenceTime.toISOString()} (day after the latest source dictation)`);
 
 /** planted tag -> dictation ids, read straight from what was ingested. */
 const planted = new Map<string, Set<string>>();
@@ -54,15 +62,22 @@ const results: any[] = [];
 for (const c of cases) {
   process.stdout.write(`  ${c.id} … `);
   const started = Date.now();
+  const firstCall = (db().prepare('SELECT COALESCE(MAX(id), 0) id FROM model_calls').get() as any).id;
   let result: any;
   let error: string | null = null;
   // A request that stalls on a rate limit is an infrastructure failure, not a wrong
   // answer, so a case gets one more chance before it counts against the product.
-  const attempt = () =>
-    Promise.race([
-      askHeyKivi(userId, c.question),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('case timed out after 300s')), 300_000)),
-    ]);
+  const attempt = async () => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      return await Promise.race([
+        askHeyKivi(userId, c.question, [], { now: referenceTime }),
+        new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('case timed out after 300s')), 300_000); }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
+  };
   try {
     try {
       result = await attempt();
@@ -157,7 +172,7 @@ for (const c of cases) {
     forgetMemory(target.id, 'user', 'removed by the evaluation to prove the answer depends on it');
     let second: any = null;
     try {
-      second = await askHeyKivi(userId, c.question);
+      second = await askHeyKivi(userId, c.question, [], { now: referenceTime });
     } catch (e: any) {
       second = { answer: '', outcome: 'error', citations: { memories: [], dictations: [] } };
     }
@@ -218,6 +233,10 @@ for (const c of cases) {
     if (!found) failures.push(`no user-stated memory containing "${c.expect_memory_created}" was created`);
   }
 
+  // Include embedding calls, retries and the forgetting/re-ask operation in case usage.
+  const ledger = db().prepare(`SELECT COALESCE(SUM(input_tokens),0) input_tokens,
+    COALESCE(SUM(output_tokens),0) output_tokens, COALESCE(SUM(cost_usd),0) cost_usd,
+    COALESCE(SUM(latency_ms),0) model_ms FROM model_calls WHERE id > ?`).get(firstCall) as any;
   const record = {
     id: c.id,
     group: c.group,
@@ -247,16 +266,16 @@ for (const c of cases) {
       notes: result.trace.notes,
       steps: result.trace.steps.map((s: any) => ({
         tool: s.tool, args: s.args, ms: s.ms, summary: s.summary,
-        candidates: (s.candidates ?? []).slice(0, 8),
+        candidates: s.candidates ?? [],
       })),
     },
     metrics: {
-      total_ms: result.trace.totalMs,
+      total_ms: Date.now() - started,
       retrieval_ms: result.trace.retrievalMs,
-      model_ms: result.trace.modelMs,
-      input_tokens: result.trace.inputTokens,
-      output_tokens: result.trace.outputTokens,
-      cost_usd: result.trace.costUsd,
+      model_ms: ledger.model_ms,
+      input_tokens: ledger.input_tokens,
+      output_tokens: ledger.output_tokens,
+      cost_usd: ledger.cost_usd,
     },
   };
   results.push(record);
@@ -384,6 +403,7 @@ const modelUsage = db()
 
 const summary = {
   ran_at: new Date().toISOString(),
+  reference_time: referenceTime.toISOString(),
   models: { chat: config.chatModel, extract: config.extractModel, embed: config.embedModel },
   corpus: {
     dictations: dictationCount,
@@ -419,6 +439,7 @@ function renderMarkdown(s: any, rs: any[], ms: any[]): string {
   L.push('# Evaluation results');
   L.push('');
   L.push(`Run ${s.ran_at} · chat model \`${s.models.chat}\` · extraction \`${s.models.extract}\` · embeddings \`${s.models.embed}\``);
+  L.push(`Relative-date reference: ${s.reference_time} (application requests use the real clock).`);
   L.push('');
   L.push(`**${s.cases.passed}/${s.cases.total} question cases passed. ${s.memory_state.passed}/${s.memory_state.total} memory-state checks passed.**`);
   L.push('');
@@ -439,6 +460,7 @@ function renderMarkdown(s: any, rs: any[], ms: any[]): string {
     L.push(`- Memories written: ${ir.created} created, ${ir.reinforced} reinforced, ${ir.superseded} superseded, ${ir.episodes} episodes, ${ir.rejected} candidates deliberately rejected, ${ir.skipped} dictations never read`);
   }
   L.push(`- Database: ${(s.database_bytes.after / 1_048_576).toFixed(2)} MB for ${s.corpus.dictations} dictations (~${s.database_bytes.per_dictation} bytes each)`);
+  L.push('- Model usage below covers this database\'s lifetime, including ingestion. Costs are estimates from the configured pricing table.');
   L.push('');
   L.push('| purpose | model | calls | in | out | avg ms | cost |');
   L.push('| --- | --- | --- | --- | --- | --- | --- |');
