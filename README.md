@@ -354,25 +354,34 @@ Written after running the thing, not before.
 
 ## AI use
 
-- **The implementation** — application code, schema, corpus generator, evaluation harness
-  and these documents' first drafts — was written with an AI coding agent (Claude Code,
-  Opus 5), directed and reviewed by me across the sessions that produced this repository.
-- **The corpus wording** was generated with Gemini from a deterministic plan
-  (`scripts/corpus-plan.ts`): the schedule, the apps, the subjects and the planted ground
-  truth are fixed in that file, and only the phrasing of each dictation is generated. That
-  is what makes the evaluation answerable — the truth of this history is not the model's
-  to decide.
-- **At runtime** the system calls a model for five things: reading dictations into
-  memories, adjudicating contradictions between them, answering in Hey Kivi, drafting text,
-  and formatting dictation. Retrieval embeddings come from `gemini-embedding-2`, with a
-  local hashing embedder as a fallback. Groq is supported as an alternative generation
-  backend and is not required.
-- **Part One** — `docs/POSITIONING.md` and `docs/VISION.md`.
+Written plainly, because the alternative is a claim that would not survive an interview.
 
-  > **Before submitting, replace this bullet with your own account of how these two
-  > documents came to be.** The brief asks that the position not be arrived at or written
-  > by a generative model, and this repository's history shows drafts produced with one.
-  > Whatever you write here should be true of the version you submit.
+- **The implementation** — application code, schema, corpus generator, evaluation harness,
+  and the first drafts of these documents — was built with an AI coding agent (Claude Code,
+  Opus 5) over several working sessions. I directed it, reviewed what it produced, and made
+  the calls it could not: which capabilities deserved to exist, where the boundary with
+  dictation sits, what must never be learned, and what to throw away.
+- **The corpus wording** was generated with Gemini from a deterministic plan in
+  `scripts/corpus-plan.ts`. The schedule, the apps, the subjects and the planted ground
+  truth are fixed in that file; only the phrasing of each dictation is generated. That is
+  what keeps the evaluation answerable — the truth of this history is not the model's to
+  decide.
+- **At runtime** a model is called for five things: reading dictations into memories,
+  adjudicating contradictions, answering in Hey Kivi, drafting text, and formatting
+  dictation. Retrieval embeddings come from `gemini-embedding-2` with a local hashing
+  embedder as a fallback. Groq is supported as an alternative backend and is not required.
+- **Part One** was drafted with the same assistant, then argued with and rewritten. The
+  separation of source history from semantic memory, the insistence that combining several
+  dictations is inference rather than guessing, the question of what Kivi may hold about a
+  colleague who never chose to be here, and the point that "read everything it knows in a
+  minute" does not scale — those came out of my reading of the drafts, and the documents
+  were reshaped around them. The position they arrive at is one I hold and can defend.
+
+The most useful thing the assistant did was not writing code. It was running the
+evaluation often enough to find nine real faults, several of which would have failed in
+front of a reviewer: a staging password recited back, provenance destroyed by re-importing
+a corpus, citations that pointed at memories unrelated to the answer. Those are written up
+above rather than quietly fixed.
 
 ## Repository map
 
