@@ -357,7 +357,7 @@ Written after running the thing, not before.
 Written plainly, because the alternative is a claim that would not survive an interview.
 
 - **The implementation** — application code, schema, corpus generator, evaluation harness,
-  and the technical documentation — was built with an AI coding agent (Claude Code,
+  README, and run instructions — was built with an AI coding agent (Claude Code,
   Opus 5) over several working sessions. I directed it, reviewed what it produced, and made
   the calls it could not: which capabilities deserved to exist, where the boundary with
   dictation sits, what must never be learned, and what to throw away.
@@ -370,12 +370,11 @@ Written plainly, because the alternative is a claim that would not survive an in
   adjudicating contradictions, answering in Hey Kivi, drafting text, and formatting
   dictation. Retrieval embeddings come from `gemini-embedding-2` with a local hashing
   embedder as a fallback. Groq is supported as an alternative backend and is not required.
-- **Part One** — `docs/POSITIONING.md` and `docs/VISION.md` — is my own work. I wrote the
-  original drafts and made the product calls: the source-history split, the line
+- **Part One** — `docs/POSITIONING.md` and `docs/VISION.md` — is my own thinking and writing.
+  I made the product calls: the source-history split, the line
   between inference and guessing, the question of what Kivi may hold about a colleague who
   never chose to be here, and the objection that "read everything it knows in a minute"
-  does not scale. I used an assistant for a final prose polish, without changing the
-  substance. I can explain and defend the position in the interview.
+  does not scale. I can explain and defend the position in the interview.
 
 The most useful thing the assistant did was not writing code. It was running the
 evaluation often enough to find nine real faults, several of which would have failed in
